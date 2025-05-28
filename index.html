@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standalone App Prompt Generator</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: rgba(255, 255, 255, 0.6);
+            --container-border: rgba(255, 255, 255, 0.2);
+            --text-color: #333;
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --code-bg: #e9ecef;
+            --border-radius: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --padding: 1.5rem;
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: var(--padding);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top */
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: var(--container-bg);
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--container-border);
+            box-shadow: var(--shadow);
+            padding: var(--padding);
+            max-width: 900px;
+            width: 100%;
+            margin-top: 20px; /* Add some top margin */
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            border-bottom: 1px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #ccc;
+            margin-bottom: 1rem;
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right .7em top 50%;
+            background-size: .65em auto;
+            cursor: pointer;
+        }
+
+        textarea {
+            height: 250px;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--code-bg);
+            resize: vertical;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .details {
+            background-color: rgba(233, 236, 239, 0.7); /* Slightly different bg for details */
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .details h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .details ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .details li {
+            margin-bottom: 0.3rem;
+        }
+
+        .instructions {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+        
+        #copy-status {
+            display: inline-block;
+            margin-left: 10px;
+            color: green;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Standalone App Prompt Generator</h1>
+        <p class="instructions">Select one of the app ideas below. The details will appear, along with a tailored prompt you can copy and provide to ChatGPT (or a similar AI) to generate the application as a single, self-contained HTML file.</p>
+
+        <label for="app-selector">Select App Idea:</label>
+        <select id="app-selector">
+            <option value="">-- Select an App --</option>
+            </select>
+
+        <div id="app-details" class="details" style="display: none;">
+            <h2 id="details-title"></h2>
+            <h3>Main Purpose:</h3>
+            <p id="details-purpose"></p>
+            <h3>Key Features:</h3>
+            <ul id="details-features"></ul>
+            <h3>Primary Libraries:</h3>
+            <p id="details-libraries"></p>
+        </div>
+
+        <div id="prompt-area" style="display: none;">
+            <label for="generated-prompt">Generated ChatGPT Prompt:</label>
+            <textarea id="generated-prompt" readonly></textarea>
+            <button id="copy-button">Copy Prompt</button>
+            <span id="copy-status">Copied!</span>
+        </div>
+    </div>
+
+    <script>
+        const appIdeas = [
+            // --- I. Data Visualization Dashboards ---
+            { id: 1, category: "Data Visualization Dashboards", title: "Live CSV Dashboard Builder", purpose: "Upload CSV data and interactively build a dashboard with multiple linked charts (bar, line, pie, scatter).", features: ["CSV upload (PapaParse)", "Column selection for axes/values", "Chart type selection per panel", "Dynamic filtering controls (sliders, dropdowns)", "Dashboard layout persistence (LocalStorage)", "Chart image export", "Glassmorphism UI panels"], libraries: "Chart.js, PapaParse" },
+            { id: 2, category: "Data Visualization Dashboards", title: "KPI Tracker & Forecaster", purpose: "Manually input or load key performance indicators over time and visualize trends with simple forecasting.", features: ["Data entry form", "CSV import/export", "Multiple KPI tracking", "Line/area charts showing trends", "Basic linear regression forecasting visualization", "Threshold alerting visuals", "Customizable timeframes", "LocalStorage persistence"], libraries: "Chart.js, PapaParse (optional)" },
+            { id: 3, category: "Data Visualization Dashboards", title: "Interactive Geo Heatmap (Simplified)", purpose: "Visualize intensity data across predefined regions (e.g., US states, world continents) using SVG or D3.js.", features: ["Data input (manual or CSV mapping)", "Color scale customization", "Interactive tooltips", "SVG-based map rendering", "Data range filtering", "Export map as SVG/PNG"], libraries: "D3.js (preferred), PapaParse" },
+            { id: 4, category: "Data Visualization Dashboards", title: "Multi-Dataset Correlation Matrix", purpose: "Upload multiple CSVs and visualize correlations between selected numerical columns.", features: ["Multiple file uploads", "Column selection UI", "Correlation calculation", "Heatmap visualization", "Interactive cell highlighting", "Data filtering"], libraries: "Chart.js (for heatmap), PapaParse" },
+            { id: 5, category: "Data Visualization Dashboards", title: "Real-time Sensor Data Simulator & Visualizer", purpose: "Simulate streaming data and display it on live-updating charts.", features: ["Configurable data simulation", "Multiple live line charts", "Buffer size controls", "Pause/resume simulation", "Data point inspection", "Visual alerts"], libraries: "Chart.js" },
+            { id: 6, category: "Data Visualization Dashboards", title: "Dynamic Pivot Table & Chart Generator", purpose: "Load tabular data (CSV) and create pivot table summaries and corresponding charts.", features: ["CSV upload", "Drag-and-drop field selection", "Aggregation functions", "Interactive pivot table", "Automated chart generation", "Export table/chart"], libraries: "PapaParse, Chart.js, Custom JS logic" },
+            { id: 7, category: "Data Visualization Dashboards", title: "Survey Results Analyzer", purpose: "Upload survey data (CSV) and automatically generate summary charts.", features: ["CSV upload", "Automatic question type detection", "Appropriate chart generation", "Filtering by demographics", "Cross-tabulation", "Export visualizations"], libraries: "PapaParse, Chart.js" },
+            { id: 8, category: "Data Visualization Dashboards", title: "Financial Portfolio Performance Visualizer", purpose: "Input or upload portfolio data to visualize allocation, growth, and risk.", features: ["Manual entry or CSV upload", "Donut chart for allocation", "Line chart for value over time", "Basic metric calculation", "Benchmark comparison"], libraries: "Chart.js, PapaParse" },
+            { id: 9, category: "Data Visualization Dashboards", title: "Web Analytics Dashboard Mockup", purpose: "Mimic web analytics dashboard using simulated or uploaded data.", features: ["Simulated data / CSV upload", "KPI cards (Glassmorphism)", "Trend charts", "Source bar charts", "Simple geo map", "Date range selection"], libraries: "Chart.js, PapaParse (optional)" },
+            { id: 10, category: "Data Visualization Dashboards", title: "Personal Health Data Dashboard", purpose: "Input or upload personal health metrics and visualize trends.", features: ["Data entry forms", "CSV import/export", "Customizable metrics", "Line/bar charts", "Goal setting visualization", "LocalStorage persistence"], libraries: "Chart.js, PapaParse" },
+            { id: 11, category: "Data Visualization Dashboards", title: "A/B Test Result Visualizer", purpose: "Input A/B test data and visualize performance differences.", features: ["Input visitors/conversions", "Calculate conversion rates", "Bar chart comparison", "Confidence interval visualization (simplified)", "Significance indicator"], libraries: "Chart.js" },
+            // --- II. Creative Tools ---
+            { id: 12, category: "Creative Tools", title: "Generative Art Playground (p5.js)", purpose: "Create abstract generative art using sliders and controls manipulating p5.js algorithms.", features: ["Multiple generative algorithms", "Parameter controls (sliders, color pickers)", "Real-time canvas updates", "Pause/play", "Save artwork as PNG", "Preset configurations"], libraries: "p5.js" },
+            { id: 13, category: "Creative Tools", title: "Simple Sprite Sheet Animator", purpose: "Upload sprite sheet, define animations, preview/export as GIF.", features: ["Image upload", "Grid overlay", "Animation definition UI", "Live preview", "GIF export (needs JS GIF library)", "Save/load definitions (LocalStorage)"], libraries: "Canvas API, gif.js (or similar CDN lib)" },
+            { id: 14, category: "Creative Tools", title: "Interactive SVG Icon Editor", purpose: "Load/edit simple SVG icons (paths, colors, strokes) and export.", features: ["SVG upload/presets", "Path point manipulation (basic)", "Color palette application", "Stroke controls", "Live preview", "Export SVG code/file"], libraries: "SVG manipulation via JS DOM" },
+            { id: 15, category: "Creative Tools", title: "Pixel Art Studio", purpose: "Grid-based editor for creating pixel art.", features: ["Configurable grid size", "Color palette tool", "Drawing tools", "Layer support (basic)", "Live preview", "Zoom", "Export PNG", "Save/load project (LocalStorage)"], libraries: "Canvas API" },
+            { id: 16, category: "Creative Tools", title: "Mandala Generator", purpose: "Create intricate mandala patterns with radial symmetry.", features: ["Canvas drawing", "Customizable symmetry sectors", "Brush types/colors", "Real-time mirroring", "Undo/redo", "Export PNG/SVG"], libraries: "Canvas API or p5.js" },
+            { id: 17, category: "Creative Tools", title: "CSS Gradient & Pattern Generator", purpose: "Visually design complex CSS gradients and background patterns.", features: ["Interactive gradient editor", "Pattern selection", "Real-time preview", "Generate CSS code", "Save favorites (LocalStorage)"], libraries: "Vanilla JS/CSS" },
+            { id: 18, category: "Creative Tools", title: "3D Logo/Text Extruder (Simplified)", purpose: "Create simple 3D extruded text/shapes using Three.js.", features: ["Text input", "Font selection", "Extrusion controls", "Material color/shininess", "Simple lighting", "Orbit controls", "Export snapshot PNG"], libraries: "Three.js" },
+            { id: 19, category: "Creative Tools", title: "Procedural Terrain Generator (2D)", purpose: "Generate 2D heightmap terrain using noise algorithms.", features: ["Noise parameter controls", "Color ramp editor", "Real-time canvas rendering", "Seed input", "Export PNG heightmap"], libraries: "p5.js or Canvas API with noise functions" },
+            { id: 20, category: "Creative Tools", title: "Emoji Mashup Mixer", purpose: "Select two emojis and visually blend parts of them (humorous).", features: ["Emoji selectors", "Canvas display", "Basic image manipulation", "Humorous effects", "Save PNG"], libraries: "Canvas API" },
+            { id: 21, category: "Creative Tools", title: "Interactive Kaleidoscope", purpose: "Simulate kaleidoscope effect using drawing or uploaded images.", features: ["Canvas drawing/Image upload", "Selectable reflection segments", "Real-time rendering", "Animation options", "Export snapshot PNG"], libraries: "Canvas API or p5.js" },
+             // --- III. AI / ML Playground Apps ---
+            { id: 22, category: "AI / ML Playground Apps", title: "Neural Network Visualizer & Trainer (Simple Classification)", purpose: "Define/upload data, configure/train a small NN (brain.js), visualize decision boundary.", features: ["Data input (canvas click/CSV)", "Configurable NN layers/neurons", "Activation function selection", "Real-time training progress chart", "Canvas visualization", "Export trained model (JSON)"], libraries: "brain.js, Chart.js, p5.js or Canvas" },
+            { id: 23, category: "AI / ML Playground Apps", title: "Basic Regression Playground", purpose: "Input/upload 2D data, train simple regression model.", features: ["Data input (click/CSV)", "Scatter plot visualization", "Train regression model", "Visualize regression line/curve", "Display equation/R-squared", "Make predictions"], libraries: "brain.js (optional), Chart.js or p5.js" },
+            { id: 24, category: "AI / ML Playground Apps", title: "Color Shade Classifier", purpose: "Train a simple NN to classify colors (RGB) into categories.", features: ["Color picker input", "User-defined categories", "Train brain.js network", "Real-time accuracy feedback", "Visualize color space (simplified)", "Test new colors"], libraries: "brain.js" },
+            { id: 25, category: "AI / ML Playground Apps", title: "Handwritten Digit Recognizer (MNIST Trainer Mockup)", purpose: "Draw digits, train simple NN (brain.js) for recognition.", features: ["Canvas drawing input", "Preprocessing", "Train brain.js network", "Real-time prediction", "Accuracy tracking", "Visualize NN weights (simplified)"], libraries: "brain.js, Canvas API" },
+            { id: 26, category: "AI / ML Playground Apps", title: "Simple Recommendation Engine Simulator", purpose: "Input preferences, simulate basic recommendation logic.", features: ["Data input forms", "Similarity calculation", "Generate recommendations", "Visualize user-item matrix", "LocalStorage persistence"], libraries: "Chart.js (heatmap), Custom JS logic" },
+            { id: 27, category: "AI / ML Playground Apps", title: "XOR Problem Solver", purpose: "Train NN (brain.js) to solve XOR, visualize process.", features: ["Fixed XOR dataset", "NN config UI", "Training button", "Real-time error chart", "Visualize decision boundaries"], libraries: "brain.js, Chart.js, p5.js/Canvas" },
+            { id: 28, category: "AI / ML Playground Apps", title: "Sentiment Analysis Trainer (Keyword-Based)", purpose: "Input labeled text, train simple keyword model, test.", features: ["Text input/labeling", "Client-side training (keyword scoring)", "Test input", "Predicted sentiment output", "Accuracy display"], libraries: "Custom JS logic" },
+            { id: 29, category: "AI / ML Playground Apps", title: "Decision Tree Visualizer", purpose: "Input dataset (CSV), build/visualize decision tree.", features: ["CSV upload", "Feature selection UI", "Client-side decision tree algorithm (simple)", "Interactive tree visualization", "Display classification rules"], libraries: "PapaParse, D3.js or SVG generation" },
+            { id: 30, category: "AI / ML Playground Apps", title: "Genetic Algorithm Explorer (Simple Optimization)", purpose: "Use GA for simple optimization, visualize evolution.", features: ["Define problem parameters", "Configure GA settings", "Run simulation", "Visualize fitness over generations", "Visualize best solution"], libraries: "Chart.js, p5.js/Canvas, custom GA logic" },
+            { id: 31, category: "AI / ML Playground Apps", title: "Rock-Paper-Scissors AI Trainer", purpose: "Play RPS against AI that learns patterns.", features: ["Game interface", "Learning AI opponent", "Visualize AI predictions/patterns", "Win/loss statistics"], libraries: "Custom JS logic, Chart.js (optional)" },
+            // --- IV. Educational Simulators ---
+            { id: 32, category: "Educational Simulators", title: "Interactive Function Plotter (2D/3D)", purpose: "Input mathematical functions, visualize interactively.", features: ["Equation input", "Adjustable plot range", "2D plotting", "Basic 3D plotting", "Parameter sliders", "Zoom/pan"], libraries: "Chart.js, p5.js, Three.js, math.js (parsing)" },
+            { id: 33, category: "Educational Simulators", title: "Simple Harmonic Motion Simulator", purpose: "Visualize mass-spring or simple pendulum motion.", features: ["Parameter sliders", "p5.js/Canvas animation", "Plots of position/velocity/acceleration", "Energy visualization"], libraries: "p5.js/Canvas, Chart.js" },
+            { id: 34, category: "Educational Simulators", title: "Projectile Motion Simulator", purpose: "Launch projectiles, visualize trajectories.", features: ["Parameter sliders", "p5.js/Canvas animation", "Real-time display", "Path tracing", "Target challenge"], libraries: "p5.js/Canvas" },
+            { id: 35, category: "Educational Simulators", title: "Gravity & Orbits Simulator (2D)", purpose: "Simulate gravitational interaction between bodies.", features: ["Add/remove bodies", "p5.js/Canvas visualization", "Orbit trails", "Collision detection", "Energy/momentum display"], libraries: "p5.js/Canvas" },
+            { id: 36, category: "Educational Simulators", title: "Basic Circuit Simulator (DC)", purpose: "Build simple DC circuits, visualize voltage/current.", features: ["Drag-and-drop components", "Set values", "Calculate/display voltage/current", "Visual current flow"], libraries: "SVG or Canvas, custom JS circuit solver" },
+            { id: 37, category: "Educational Simulators", title: "Wave Interference Simulator (2D)", purpose: "Visualize interference patterns from multiple wave sources.", features: ["Place wave sources", "Adjustable parameters", "Real-time visualization", "Sliders"], libraries: "p5.js/Canvas" },
+            { id: 38, category: "Educational Simulators", title: "Logic Gate Playground", purpose: "Connect basic logic gates, observe behavior.", features: ["Drag-and-drop gates", "Wiring tool", "Input switches", "Output LEDs", "Real-time signal propagation", "Truth table generation"], libraries: "SVG or Canvas, custom JS logic" },
+            { id: 39, category: "Educational Simulators", title: "Fourier Series Explorer", purpose: "Visualize waveform decomposition/synthesis.", features: ["Select/draw waveform", "Harmonic controls", "Animation of components/sum", "Frequency spectrum chart"], libraries: "p5.js/Canvas, Chart.js" },
+            { id: 40, category: "Educational Simulators", title: "Cellular Automata Simulator (e.g., Game of Life)", purpose: "Simulate 1D/2D cellular automata.", features: ["Grid display", "Configurable grid/rules", "Step/continuous simulation", "Draw initial state", "Save/load patterns"], libraries: "p5.js/Canvas, LocalStorage" },
+            { id: 41, category: "Educational Simulators", title: "Sorting Algorithm Visualizer", purpose: "Visualize steps of various sorting algorithms.", features: ["Generate random array (bars)", "Select algorithm", "Step execution controls", "Animation speed", "Highlighting", "Performance counters"], libraries: "p5.js/Canvas or D3.js" },
+            // --- V. Finance & Budgeting Tools ---
+            { id: 42, category: "Finance & Budgeting", title: "Interactive Budget Planner & Analyzer", purpose: "Set budget, track expenses/income, visualize spending.", features: ["Define categories/limits", "Input transactions", "CSV import/export", "Spending charts", "Balance chart", "Budget vs. actual", "LocalStorage persistence"], libraries: "Chart.js, PapaParse, LocalStorage" },
+            { id: 43, category: "Finance & Budgeting", title: "Loan & Mortgage Calculator Suite", purpose: "Calculate payments, amortization, compare loans.", features: ["Input loan details", "Calculate payment", "Interactive amortization table", "Principal vs. interest chart", "Compare scenarios"], libraries: "Chart.js" },
+            { id: 44, category: "Finance & Budgeting", title: "Investment ROI & Future Value Calculator", purpose: "Project future value of investments.", features: ["Input investment details", "Interactive growth chart", "Year-by-year table", "Sensitivity analysis"], libraries: "Chart.js" },
+            { id: 45, category: "Finance & Budgeting", title: "Savings Goal Planner", purpose: "Plan how to reach savings goals.", features: ["Define goals", "Input savings/contributions", "Calculate required rate/time", "Visualize progress", "LocalStorage persistence"], libraries: "Chart.js (optional), LocalStorage" },
+            { id: 46, category: "Finance & Budgeting", title: "Currency Converter Dashboard", purpose: "Convert currencies using manually updated rates.", features: ["Define currencies/rates", "Input amount", "See multiple conversions", "Save rate tables"], libraries: "Vanilla JS, LocalStorage" },
+            { id: 47, category: "Finance & Budgeting", title: "Freelancer Project Profitability Calculator", purpose: "Calculate estimated profitability of projects.", features: ["Input hours/rate/expenses", "Calculate revenue/cost/profit/margin", "Break-even analysis", "Compare scenarios"], libraries: "Vanilla JS" },
+            { id: 48, category: "Finance & Budgeting", title: "Retirement Savings Simulator (401k/IRA)", purpose: "Simulate retirement savings growth.", features: ["Input personal/financial details", "Interactive projection chart", "Analyze impact of changes"], libraries: "Chart.js" },
+            { id: 49, category: "Finance & Budgeting", title: "Net Worth Tracker", purpose: "Track assets and liabilities, visualize net worth.", features: ["Input assets/liabilities", "Calculate net worth", "Trend chart", "Breakdown chart", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            { id: 50, category: "Finance & Budgeting", title: "Stock Portfolio Performance Tracker (Manual Entry)", purpose: "Manually track stocks, visualize performance.", features: ["Input transactions", "Calculate cost basis/value (manual price update)", "Gain calculation", "Allocation chart", "Performance chart", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            { id: 51, category: "Finance & Budgeting", title: "Spreadsheet Synthesizer (Playful)", purpose: "Spreadsheet where cells trigger audio/visuals.", features: ["Grid interface", "Input numbers/formulas", "Map values to audio/visuals", "Data-driven soundscapes/visuals"], libraries: "Web Audio API, p5.js (optional), Custom JS grid" },
+            // --- VI. Health & Bio Trackers ---
+             { id: 52, category: "Health & Bio Trackers", title: "BMI & Body Fat Percentage Calculator/Visualizer", purpose: "Calculate BMI/BFP, track changes.", features: ["Input measurements", "Calculate BMI/BFP", "Visualize results/history", "Show classification"], libraries: "Chart.js, LocalStorage" },
+            { id: 53, category: "Health & Bio Trackers", title: "Habit Tracker & Streaks Visualizer", purpose: "Define habits, track completion streaks.", features: ["Define habits", "Calendar marking", "Streak calculation", "Visualization", "Motivational messages", "LocalStorage persistence"], libraries: "Chart.js (optional), LocalStorage" },
+            { id: 54, category: "Health & Bio Trackers", title: "Calorie & Macronutrient Tracker", purpose: "Log meals, track intake against targets.", features: ["Define targets", "Food database input", "Meal logging", "Intake vs. target charts", "History tracking", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            { id: 55, category: "Health & Bio Trackers", title: "Hydration Tracker", purpose: "Track daily water intake.", features: ["Set goal", "Log intake", "Visual progress indicator", "Reminders", "History chart"], libraries: "Chart.js (optional), LocalStorage" },
+            { id: 56, category: "Health & Bio Trackers", title: "Sleep Log & Analyzer", purpose: "Log sleep duration/quality, visualize patterns.", features: ["Input sleep times/quality", "Calculate duration", "Charts", "Average calculation", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            { id: 57, category: "Health & Bio Trackers", title: "Mood Tracker & Journal", purpose: "Log mood, triggers, journal entries.", features: ["Mood selection", "Trigger tagging", "Journal entry", "Calendar view", "Correlation charts", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            { id: 58, category: "Health & Bio Trackers", title: "Medication & Supplement Tracker", purpose: "Schedule and track medication intake.", features: ["Define meds/schedule", "Daily checklist", "History log", "Adherence percentage", "Reminders", "LocalStorage persistence"], libraries: "LocalStorage" },
+            { id: 59, category: "Health & Bio Trackers", title: "Exercise Log & Progress Visualizer", purpose: "Log workouts, visualize progress.", features: ["Input workout details", "Track metrics", "Progress charts", "Calculate volume/duration", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            { id: 60, category: "Health & Bio Trackers", title: "Blood Pressure & Heart Rate Tracker", purpose: "Log BP/HR readings, visualize trends.", features: ["Input readings", "Charts", "Highlight against categories", "CSV export", "LocalStorage persistence"], libraries: "Chart.js, PapaParse (export), LocalStorage" },
+            { id: 61, category: "Health & Bio Trackers", title: "Symptom Tracker", purpose: "Log symptom occurrence/severity.", features: ["Define symptoms", "Input occurrences/severity", "Notes/triggers", "Calendar heatmap", "Frequency/severity charts", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
+            // --- VII. Gamified Utilities ---
+            { id: 62, category: "Gamified Utilities", title: "Gamified Pomodoro Timer", purpose: "Pomodoro timer rewarding sessions with points/visual progress.", features: ["Configurable timers", "Visual display", "Simple reward system", "Session history", "Sound notifications"], libraries: "p5.js/Canvas (optional)" },
+            { id: 63, category: "Gamified Utilities", title: "RPG Character Stat Builder/Visualizer", purpose: "Allocate stat points, visualize build.", features: ["Selectable rulesets", "Stat allocation UI", "Calculate derived stats", "Radar chart visualization", "Save/load builds"], libraries: "Chart.js, LocalStorage" },
+            { id: 64, category: "Gamified Utilities", title: "Interactive Dice Roller & Probability Explorer", purpose: "Roll dice, visualize probability distributions.", features: ["Select dice/modifiers", "Roll simulation", "Sum display", "Histogram of results", "Calculate probabilities"], libraries: "Chart.js, p5.js/Canvas (optional)" },
+            { id: 65, category: "Gamified Utilities", title: "Fitness Challenge Tracker (Gamified)", purpose: "Track fitness challenge progress with levels/badges.", features: ["Define challenge", "Log progress", "Visual progress bar", "Unlock badges/levels", "Streak tracking"], libraries: "Canvas/p5.js (optional), LocalStorage" },
+            { id: 66, category: "Gamified Utilities", title: "Typing Speed Test & Trainer Game", purpose: "Test typing speed/accuracy with gamified elements.", features: ["Display text", "Track typing", "Calculate WPM/accuracy", "Highlight errors", "Scoring/levels", "History"], libraries: "Chart.js (optional), p5.js (optional)" },
+            { id: 67, category: "Gamified Utilities", title: "Decision Spinner Maker", purpose: "Create custom spinners for decisions/games.", features: ["Input segments", "Customizable colors/text", "Interactive spinning animation", "Random result", "Save/load spinners"], libraries: "Canvas/p5.js, LocalStorage" },
+            { id: 68, category: "Gamified Utilities", title: "Loot Drop Simulator", purpose: "Simulate loot drops based on configurable rates.", features: ["Define item rarities/chances", "Simulate drops", "Display results", "Visualize rarity distribution"], libraries: "Chart.js" },
+            { id: 69, category: "Gamified Utilities", title: "Kanban Racer (Playful)", purpose: "Kanban board where tasks visually race or unlock achievements.", features: ["Standard Kanban board", "Visual race elements", "Animations/scoring on task movement"], libraries: "Custom JS/CSS, Canvas/p5.js (optional)" },
+            { id: 70, category: "Gamified Utilities", title: "Personal Finance Quest", purpose: "Frame budgeting/saving as quests with XP/levels.", features: ["Link budget/goals to quests", "XP for milestones", "Level-up system", "XP bars", "Simple avatar"], libraries: "Chart.js, Canvas, LocalStorage" },
+            { id: 71, category: "Gamified Utilities", title: "Code Refactoring Challenge Timer", purpose: "Timer with checklist/prompts for refactoring sessions.", features: ["Set timer", "Display refactoring checklist", "Scoring", "Session history"], libraries: "Vanilla JS, LocalStorage" },
+            // --- VIII. Productivity Tools ---
+            { id: 72, category: "Productivity Tools", title: "Advanced Kanban Board", purpose: "Client-side Kanban with tags, due dates, filtering.", features: ["Multiple boards/columns", "Drag-and-drop cards", "Card details (checklist, due date, tags)", "Filtering", "WIP limits", "Archive", "LocalStorage persistence"], libraries: "Custom JS/CSS (maybe drag-drop lib), LocalStorage" },
+            { id: 73, category: "Productivity Tools", title: "Goal Setting & SMART Tracker", purpose: "Define SMART goals, track key results.", features: ["Guided goal creation", "Define key results", "Progress tracking", "Deadline reminders", "Visualize hierarchy", "LocalStorage persistence"], libraries: "Chart.js (optional), LocalStorage" },
+            { id: 74, category: "Productivity Tools", title: "Time Blocking Calendar Assistant", purpose: "Visually block time on a weekly calendar.", features: ["Weekly grid interface", "Create/edit time blocks", "Task categories", "Time allocation summary chart", "Recurring blocks", "LocalStorage persistence"], libraries: "Chart.js (optional), Custom JS/CSS" },
+            { id: 75, category: "Productivity Tools", title: "Decision Matrix Analyzer (Weighted Scoring)", purpose: "Compare options against weighted criteria.", features: ["Define criteria/weights", "Define options", "Score options", "Calculate weighted scores", "Table display", "Score visualization", "Save/load matrices"], libraries: "Chart.js, LocalStorage" },
+            { id: 76, category: "Productivity Tools", title: "Eisenhower Matrix Task Sorter", purpose: "Prioritize tasks by urgency/importance.", features: ["Input tasks", "Rate urgency/importance", "Automatic quadrant placement", "Interactive view", "LocalStorage persistence"], libraries: "Custom JS/CSS, LocalStorage" },
+            { id: 77, category: "Productivity Tools", title: "Personal CRM (Simple Contact Manager)", purpose: "Track contacts and interaction history.", features: ["Add/edit contacts", "Log interactions", "Tag contacts", "Search/filter", "Reminders", "LocalStorage persistence"], libraries: "LocalStorage" },
+            { id: 78, category: "Productivity Tools", title: "Digital Bullet Journal (Simplified)", purpose: "Digital implementation of bullet journaling.", features: ["Daily/weekly log views", "Input items (task, event, note)", "Status tracking", "Tagging/collections", "Search", "LocalStorage persistence"], libraries: "LocalStorage" },
+            { id: 79, category: "Productivity Tools", title: "Meeting Notes & Action Item Tracker", purpose: "Take structured notes, extract action items.", features: ["Basic rich text editor", "Predefined sections", "Tag action items", "Summary view of pending items", "LocalStorage persistence"], libraries: "LocalStorage" },
+            { id: 80, category: "Productivity Tools", title: "Flowchart & Mind Map Creator (Basic)", purpose: "Create simple flowcharts or mind maps.", features: ["Canvas/SVG drawing area", "Add nodes/connectors", "Basic styling", "Manual layout", "Export SVG/PNG", "Save/load structure"], libraries: "SVG or Canvas API, D3.js (optional), LocalStorage" },
+            { id: 81, category: "Productivity Tools", title: "Project Timeline Generator (Gantt-like)", purpose: "Create simple project timelines visually.", features: ["Define tasks (dates/duration)", "Visualize on timeline", "Dependencies (simple)", "Milestones", "Drag-and-drop adjustment", "Export visual"], libraries: "SVG or Canvas API, D3.js (optional)" },
+            // --- IX. Interactive Editors ---
+            { id: 82, category: "Interactive Editors", title: "Resume Builder with Live Preview", purpose: "Fill structured fields, see formatted resume preview update live.", features: ["Form inputs", "Multiple templates (CSS)", "Live preview panel", "Reorder sections", "Export HTML/Print PDF"], libraries: "Vanilla JS/CSS" },
+            { id: 83, category: "Interactive Editors", title: "CSS Theme Generator (Glassmorphism Focus)", purpose: "Interactively create Glassmorphism themes, export CSS.", features: ["Controls for blur, transparency, colors, borders", "Live preview area", "Generate CSS variables"], libraries: "Vanilla JS/CSS" },
+            { id: 84, category: "Interactive Editors", title: "Markdown Editor with Live Preview & Style Options", purpose: "Write Markdown, see live HTML preview with style options.", features: ["Markdown input", "Live preview panel", "Style selection", "Export HTML", "Save text"], libraries: "Marked.js or Showdown.js, LocalStorage" },
+            { id: 85, category: "Interactive Editors", title: "Mini Vector Logo Editor (Figma-like Emulation)", purpose: "Create simple vector logos on canvas.", features: ["Canvas area", "Basic shape/pen/text tools", "Color fill/stroke", "Layering", "Transformations", "SVG export"], libraries: "Canvas API or SVG.js" },
+            { id: 86, category: "Interactive Editors", title: "Code Snippet Manager & Presenter", purpose: "Store, tag, present code snippets with syntax highlighting.", features: ["Code input", "Language selection", "Syntax highlighting", "Tagging", "Search/filter", "Save library", "Presentation mode"], libraries: "Prism.js or highlight.js, LocalStorage" },
+            { id: 87, category: "Interactive Editors", title: "Interactive Color Palette Generator", purpose: "Generate harmonious color palettes.", features: ["Base color picker", "Select harmony rule", "Generate swatches", "Adjust colors", "Visualize on UI samples", "Export palette"], libraries: "Vanilla JS/CSS (color logic)" },
+            { id: 88, category: "Interactive Editors", title: "JSON Editor & Formatter", purpose: "Edit, validate, format, visualize JSON data.", features: ["JSON input", "Syntax highlighting", "Formatting", "Validation", "Tree view visualization", "Load/Save file", "Save snippets"], libraries: "Syntax highlighter lib, Custom JS, LocalStorage" },
+            { id: 89, category: "Interactive Editors", title: "Regular Expression Tester & Visualizer", purpose: "Test regex, visualize matches/groups.", features: ["Regex/test string inputs", "Real-time match highlighting", "Display groups", "Cheatsheet/builder (optional)", "Regex structure visualization (optional)"], libraries: "Vanilla JS, D3.js or SVG (optional)" },
+            { id: 90, category: "Interactive Editors", title: "Presentation Slide Editor (Basic)", purpose: "Create simple presentation slides.", features: ["Add/remove/reorder slides", "Basic layouts", "Text editing", "Image upload", "Presentation mode", "Save structure"], libraries: "Custom JS/CSS, LocalStorage" },
+            // --- X. Simulation Engines ---
+            { id: 91, category: "Simulation Engines", title: "Particle Physics Sandbox (2D)", purpose: "Simulate interactions between particles with customizable forces.", features: ["Add particles", "Define forces", "p5.js/Canvas visualization", "Collision detection", "Parameter sliders"], libraries: "p5.js/Canvas" },
+            { id: 92, category: "Simulation Engines", title: "Ecosystem Simulator (Predator-Prey)", purpose: "Simulate population dynamics.", features: ["Set initial conditions/rates", "Visualize populations (map or chart)", "Parameter sliders"], libraries: "p5.js/Canvas or Chart.js" },
+            { id: 93, category: "Simulation Engines", title: "Traffic Flow Simulator (Single Intersection)", purpose: "Simulate car traffic through an intersection.", features: ["Visualize intersection", "Configurable lights/arrival rates", "Car movement/queuing", "Display metrics"], libraries: "p5.js/Canvas" },
+            { id: 94, category: "Simulation Engines", title: "Sand/Powder Simulation (Falling Sand Game)", purpose: "Cellular automata simulation of falling sand/liquids.", features: ["Canvas grid", "Tools to paint elements", "Simulation loop", "Adjustable speed"], libraries: "Canvas API" },
+            { id: 95, category: "Simulation Engines", title: "Simple Cloth Simulation (Verlet Integration)", purpose: "Simulate a 2D cloth mesh.", features: ["Define cloth grid", "p5.js/Canvas rendering", "Interaction (drag points)", "Adjustable physics", "Pin points"], libraries: "p5.js/Canvas" },
+            { id: 96, category: "Simulation Engines", title: "Flocking Simulation (Boids)", purpose: "Simulate flocking behavior.", features: ["Simulate agents", "Separation/alignment/cohesion rules", "p5.js/Canvas visualization", "Adjust rule weights", "Obstacles"], libraries: "p5.js/Canvas" },
+            { id: 97, category: "Simulation Engines", title: "Diffusion-Limited Aggregation (DLA) Simulator", purpose: "Simulate fractal growth patterns.", features: ["Canvas visualization", "Random particle walks", "Parameter controls", "Export PNG"], libraries: "Canvas API or p5.js" },
+            // --- XI. Infographic Generators ---
+            { id: 98, category: "Infographic Generators", title: "Dynamic Infographic Card Creator", purpose: "Create simple cards combining icon, statistic, mini-chart.", features: ["Select icon", "Input statistic", "Choose mini-viz", "Customize colors", "Layout options", "Export SVG/PNG"], libraries: "SVG generation, Chart.js" },
+            { id: 99, category: "Infographic Generators", title: "Timeline Infographic Generator", purpose: "Create visual timelines with events.", features: ["Input events", "Automatic layout", "Style options", "Export SVG/PNG"], libraries: "SVG generation or HTML+CSS" },
+            { id: 100, category: "Infographic Generators", title: "Comparative Stat Infographic Builder", purpose: "Visually compare 2-3 statistics.", features: ["Input data", "Select visualization style", "Customize colors/icons", "Add title/source", "Export SVG/PNG"], libraries: "SVG generation, Chart.js (optional)" },
+             // --- XII. Code Visualizers ---
+            { id: 101, category: "Code Visualizers", title: "JSON Data Structure Visualizer", purpose: "Paste JSON, visualize structure as interactive tree.", features: ["JSON input", "Validation", "Collapsible tree view", "Search nodes", "Display data types"], libraries: "D3.js or Custom JS/CSS" },
+            { id: 102, category: "Code Visualizers", title: "CSS Specificity Calculator & Visualizer", purpose: "Input CSS selector, calculate/visualize specificity.", features: ["Selector input", "Parse selector", "Calculate specificity", "Visualize score", "Compare selectors"], libraries: "Custom JS parsing/calculation" },
+            { id: 103, category: "Code Visualizers", title: "Basic HTML DOM Tree Visualizer", purpose: "Paste HTML, visualize DOM structure as tree.", features: ["HTML input", "Parse HTML", "Generate tree visualization", "Highlight element on hover"], libraries: "D3.js (optional), Vanilla JS DOM" },
+            // --- XIII. Forms & Data Tools ---
+            { id: 104, category: "Forms & Data Tools", title: "CSV to JSON Converter & Configurator", purpose: "Convert CSV to various JSON formats.", features: ["CSV upload", "Header/type detection options", "Select output structure", "Live preview", "Download JSON"], libraries: "PapaParse" },
+            { id: 105, category: "Forms & Data Tools", title: "JSON to CSV Converter", purpose: "Convert JSON (array of objects) to CSV.", features: ["JSON input/upload", "Header detection", "Nested object handling", "Delimiter selection", "Preview CSV", "Download CSV"], libraries: "PapaParse (CSV generation), Custom JSON parsing" },
+            { id: 106, category: "Forms & Data Tools", title: "Interactive Form Builder (Schema-based)", purpose: "Define form structure via JSON schema, render form.", features: ["JSON schema input", "Render HTML form dynamically", "Basic validation", "Collect data as JSON", "Export data"], libraries: "Custom JS schema parsing/form generation" },
+            { id: 107, category: "Forms & Data Tools", title: "CSV Data Cleaner & Filter Tool", purpose: "Upload CSV, perform simple cleaning/filtering.", features: ["CSV upload", "Table display", "Filtering UI", "Remove duplicates", "Handle missing data", "Export cleaned CSV"], libraries: "PapaParse, Custom JS data manipulation" },
+            // --- XIV. Music & Sound ---
+            { id: 108, category: "Music & Sound", title: "Simple Drum Machine / Sequencer", purpose: "Create basic drum patterns using step sequencer.", features: ["Grid interface", "Load basic samples", "Program beats", "Playback controls", "Volume controls", "Save/load patterns"], libraries: "Web Audio API, LocalStorage" },
+            { id: 109, category: "Music & Sound", title: "Audio Visualizer Playground", purpose: "Visualize audio input (mic/file).", features: ["Select audio source", "Web Audio API analysis", "Canvas/p5.js rendering", "Options for viz type/colors", "FFT size adjustment"], libraries: "Web Audio API, Canvas/p5.js" },
+            { id: 110, category: "Music & Sound", title: "Synthesizer Explorer (Basic Oscillators & Effects)", purpose: "Experiment with basic sound synthesis.", features: ["Select oscillator", "ADSR envelope", "Filter controls", "Play notes (keyboard/on-screen)", "Basic effects", "Visualize waveform"], libraries: "Web Audio API, Canvas (optional)" },
+            // --- XV. Miscellaneous Novelty Apps ---
+            { id: 111, category: "Miscellaneous Novelty Apps", title: "Corporate Jargon Translator (Humorous)", purpose: "'Translate' plain English to corporate buzzwords.", features: ["Text input", "Predefined dictionary", "Exaggerated translation", "Sliders for 'synergy level'"], libraries: "Custom JS logic" },
+            { id: 112, category: "Miscellaneous Novelty Apps", title: "Emoji Mood Forecaster (Humorous / AI Parody)", purpose: "Playfully 'predicts' mood using nonsensical inputs.", features: ["Unrelated input sliders", "Feeds arbitrary brain.js model", "Outputs emoji + faux confidence"], libraries: "brain.js (optional), Vanilla JS" },
+            { id: 113, category: "Miscellaneous Novelty Apps", title: "Procedural Fantasy Map Generator (Simple)", purpose: "Generate simple fantasy maps.", features: ["Noise for terrain", "Color by height", "Simple river/town placement", "Render on Canvas/p5.js", "Export PNG"], libraries: "p5.js/Canvas with noise functions" },
+            { id: 114, category: "Miscellaneous Novelty Apps", title: "ASCII Art Generator (Image-based)", purpose: "Convert uploaded images into ASCII art.", features: ["Image upload", "Resize/process on canvas", "Map brightness to ASCII chars", "Display result", "Options", "Copy output"], libraries: "Canvas API" },
+            { id: 115, category: "Miscellaneous Novelty Apps", title: "'What to Watch?' Randomizer & Filter", purpose: "Decide what movie/show to watch from user list.", features: ["Input list", "Tagging/filtering", "Random selection", "Display selection", "Save list"], libraries: "LocalStorage" }
+        ];
+
+        const selector = document.getElementById('app-selector');
+        const detailsDiv = document.getElementById('app-details');
+        const promptAreaDiv = document.getElementById('prompt-area');
+        const promptTextarea = document.getElementById('generated-prompt');
+        const copyButton = document.getElementById('copy-button');
+        const copyStatus = document.getElementById('copy-status');
+
+        // Populate selector
+        appIdeas.forEach(app => {
+            const option = document.createElement('option');
+            option.value = app.id;
+            option.textContent = `(${app.id}) ${app.title}`;
+            selector.appendChild(option);
+        });
+
+        // Handle selection change
+        selector.addEventListener('change', (event) => {
+            const selectedId = parseInt(event.target.value);
+            const selectedApp = appIdeas.find(app => app.id === selectedId);
+
+            if (selectedApp) {
+                displayAppDetails(selectedApp);
+                generateAndDisplayPrompt(selectedApp);
+                detailsDiv.style.display = 'block';
+                promptAreaDiv.style.display = 'block';
+            } else {
+                detailsDiv.style.display = 'none';
+                promptAreaDiv.style.display = 'none';
+            }
+        });
+
+        // Display App Details
+        function displayAppDetails(app) {
+            document.getElementById('details-title').textContent = app.title;
+            document.getElementById('details-purpose').textContent = app.purpose;
+            document.getElementById('details-libraries').textContent = app.libraries || 'Vanilla JS/CSS, HTML5 APIs';
+
+            const featuresList = document.getElementById('details-features');
+            featuresList.innerHTML = ''; // Clear previous features
+            app.features.forEach(feature => {
+                const li = document.createElement('li');
+                li.textContent = feature;
+                featuresList.appendChild(li);
+            });
+        }
+
+        // Generate and Display Prompt
+        function generateAndDisplayPrompt(app) {
+            const featuresString = app.features.map(f => `* ${f}`).join('\n');
+            const librariesString = app.libraries ? app.libraries.split(',').map(l => l.trim()).filter(l => l).map(l => `* ${l} (use latest zero-config CDN link)`).join('\n') : '* Rely primarily on vanilla ES6+ JS, HTML5 APIs (Canvas, SVG, Web Audio, etc.), and CSS3.';
+
+            const prompt = `
+Act as an expert web developer specializing in creating fully standalone, single-file web applications with zero external dependencies or setup (beyond CDN libraries).
+
+Your task is to create the complete HTML, CSS3 (inline \`<style>\`), and modern ES6 JavaScript (inline \`<script>\`) code for the following application, delivered as a single, self-contained HTML file:
+
+**App Title:** ${app.title}
+
+**Main Purpose:** ${app.purpose}
+
+**Key Features to Implement:**
+${featuresString}
+* Ability to handle user input via interactive controls (sliders, forms, buttons, drag-drop, etc., as appropriate).
+* Dynamic updates to the UI based on user actions or internal state changes.
+* Client-side data processing and logic as required by the features.
+* Data persistence using LocalStorage where appropriate (e.g., saving user settings, data, or state).
+* File input using FileReader API if data import (like CSV) is explicitly mentioned or implied.
+* File output/download using Blobs if data/image/file export is explicitly mentioned or implied.
+
+**Primary Libraries to Use (via Zero-Config CDN):**
+${librariesString}
+* Ensure all external libraries are loaded via reliable, versioned CDN links (e.g., from cdnjs, jsdelivr, unpkg).
+
+**Technical & Style Requirements:**
+* **Single File:** All HTML, CSS, and JavaScript MUST be contained within a single \`.html\` file. CSS must be within \`<style>\` tags in the \`<head>\`, and JavaScript within \`<script>\` tags near the end of the \`<body>\`. Use ES6 modules within the script tag if it helps organize complex code.
+* **Zero Setup:** The app must run directly when the HTML file is opened in a modern browser (Chrome, Firefox, Edge). No build steps, installations, or API keys allowed.
+* **Modern Code:** Use HTML5 semantic elements, modern CSS3 features (Flexbox/Grid for layout), and ES6+ JavaScript syntax (const/let, arrow functions, classes, async/await where appropriate).
+* **Visual Polish:** Implement a clean, modern, and responsive UI. Incorporate CSS3 Glassmorphism effects (subtle background blur and transparency on relevant containers, panels, or modals) for a contemporary aesthetic. Ensure good readability, contrast, and usability across different screen sizes.
+* **Complexity & Interactivity:** The implementation should match the complexity implied by the features, comparable to an advanced interactive tool or dashboard. Ensure the app feels responsive and interactive.
+* **Error Handling:** Include basic client-side error handling (e.g., for file parsing issues, invalid user input, potential API errors if using browser APIs).
+* **Comments:** Add comments to explain key sections and complex logic within the JavaScript code.
+
+Generate the complete HTML file content starting with \`<!DOCTYPE html>\` and ending with \`</html>\`. Ensure the code is well-formatted and functional.
+`;
+            promptTextarea.value = prompt.trim();
+        }
+
+        // Copy Button Functionality
+        copyButton.addEventListener('click', () => {
+            promptTextarea.select(); // Select the text
+            try {
+                navigator.clipboard.writeText(promptTextarea.value)
+                    .then(() => {
+                        // Visual feedback
+                        copyStatus.style.opacity = '1';
+                        setTimeout(() => {
+                            copyStatus.style.opacity = '0';
+                        }, 1500); // Fade out after 1.5 seconds
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                        // Fallback for older browsers or errors
+                        try {
+                            document.execCommand('copy');
+                            copyStatus.style.opacity = '1';
+                             setTimeout(() => {
+                                copyStatus.style.opacity = '0';
+                             }, 1500);
+                        } catch (execErr) {
+                             console.error('Fallback copy failed: ', execErr);
+                             alert('Failed to copy prompt automatically. Please copy it manually.');
+                        }
+                    });
+            } catch (err) {
+                console.error('Clipboard API not available or failed: ', err);
+                 alert('Failed to copy prompt automatically. Please copy it manually.');
+            }
+
+             // Deselect text after attempting copy
+             window.getSelection().removeAllRanges();
+        });
+
+    </script>
+
+</body>
+</html>
