@@ -2,13 +2,13 @@
 <!--
 Magic — Ultimate Universal Prompt Generator (Single-File, Offline, Secure)
 Author: Shroomtop420® (Alex)  •  License: MIT
-Version: 2.0.0 • Build: 2025-08-28
-Source basis: user's Magic prototype (enhanced end-to-end)
+Version: 3.0.0 • Build: 2025-08-28
 Notes:
 - Single HTML file, mobile-first, Tailwind CDN, strict CSP, no external images.
 - PWA-lite SW for offline caching. No secrets, no telemetry by default.
-- Implements canonical slot schema + pattern library + deterministic assembly + validators.
-- Every text field has a paired dropdown (quick-pick). Global Library modal adds bulk options.
+- Canonical slot schema + 24-domain coverage + pattern router + validators.
+- Every text box has companion dropdown(s). Global Library + Templates + Workflows.
+- Back-translate, Improve Prompt, API payload exports, i18n (en/es) & RTL toggle.
 -->
 <html lang="en" class="bg-black text-white">
 <head>
@@ -17,7 +17,7 @@ Notes:
   <title>Magic — Ultimate Prompt Generator • Shroomtop420®</title>
   <meta name="description" content="Turn any intent into a validated, safe, high-quality ChatGPT prompt. Single-file, offline, secure-by-default."/>
   <meta name="theme-color" content="#0b0c10"/>
-  <!-- Strict CSP (nonce must match inline <script> tags); Tailwind CDN allowed -->
+  <!-- Strict CSP -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'none';
     script-src 'nonce-s420nonce' https://cdn.tailwindcss.com;
@@ -32,7 +32,7 @@ Notes:
     form-action 'self';
     manifest-src 'self' data:;
   ">
-  <!-- Favicon (inline SVG) -->
+  <!-- Inline SVG Favicon -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f1220'/%3E%3Cpath d='M10 42c4 6 12 10 22 10 10 0 18-4 22-10-3-8-11-14-22-14S13 34 10 42z' fill='%2316f5b4'/%3E%3Ccircle cx='32' cy='28' r='6' fill='%23a78bfa'/%3E%3C/svg%3E"/>
   <!-- Manifest (inline data:) -->
   <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;Magic Prompt Generator&quot;,&quot;short_name&quot;:&quot;Magic&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230b0c10&quot;,&quot;theme_color&quot;:&quot;%230b0c10&quot;,&quot;icons&quot;:[]}"/>
@@ -58,7 +58,7 @@ Notes:
     .select{ background:#0f1220; border:1px solid #2a2f43; border-radius:.75rem; padding:.55rem; }
     .input{ background:#0f1220; border:1px solid #2a2f43; border-radius:.75rem; padding:.55rem .75rem; }
     .chip{ display:inline-flex; align-items:center; gap:.5rem; border:1px solid #2a2f43; border-radius:999px; padding:.15rem .6rem; margin:.15rem; background:#0f1220; }
-    .modal{ position:fixed; inset:0; display:none; background:#000a; z-index:50; }
+    .modal{ position:fixed; inset:0; display:none; background:#000a; z-index:60; }
     .modal.open{ display:block; }
     .panel{ position:absolute; inset:0; display:grid; grid-template-columns:280px 1fr; }
     .tabbtn{ display:flex; align-items:center; gap:.5rem; width:100%; text-align:left; padding:.6rem .8rem; border-left:3px solid transparent; border-bottom:1px solid #1e2232; }
@@ -68,13 +68,14 @@ Notes:
     .ok{ color:#16f5b4; }
     .warn{ color:#fbbf24; }
     .err{ color:#f87171; }
+    [dir="rtl"] .rtl-hidden{display:none;}
   </style>
 </head>
 <body class="min-h-screen">
-  <header class="max-w-6xl mx-auto px-4 pt-8">
-    <div class="flex items-center justify-between gap-3">
+  <header class="max-w-7xl mx-auto px-4 pt-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div class="flex items-center gap-3">
-        <svg aria-hidden="true" width="32" height="32" viewBox="0 0 64 64" class="drop-shadow">
+        <svg aria-hidden="true" width="36" height="36" viewBox="0 0 64 64" class="drop-shadow">
           <rect width="64" height="64" rx="14" fill="#0f1220" stroke="#1f2333" />
           <path d="M10 42c4 6 12 10 22 10 10 0 18-4 22-10-3-8-11-14-22-14S13 34 10 42z" fill="#16f5b4"/>
           <circle cx="32" cy="28" r="6" fill="#a78bfa"/>
@@ -82,244 +83,316 @@ Notes:
         <div>
           <p class="text-xs tracking-wider text-slate-400 uppercase">Shroomtop420®</p>
           <h1 class="text-2xl md:text-3xl font-bold">Magic — Ultimate Prompt Generator</h1>
-          <p class="text-slate-300 text-sm">Pick, don’t type. Every slot has quick-picks + library. Deterministic assembly + safety validators.</p>
+          <p class="text-slate-300 text-sm">Pick, don’t type. Every slot has quick-picks + library. Router + validators + safety.</p>
         </div>
       </div>
-      <div class="text-right">
-        <p id="status" class="text-xs text-slate-400">Initializing…</p>
-        <p class="text-[10px] text-slate-500 code">v2.0.0 • Single-file • Offline</p>
+      <div class="flex items-center gap-2">
+        <span id="status" class="text-xs text-slate-400">Initializing…</span>
+        <span class="text-[10px] text-slate-500 code">v3.0.0 • Single-file • Offline</span>
       </div>
     </div>
+    <nav class="mt-3 flex flex-wrap gap-2">
+      <button class="btn px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300" data-nav="quick">Quick Build</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300" data-nav="advanced">Advanced</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300" id="openLibrary">Library</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300" id="openTemplates">Templates</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300" id="openWorkflows">Workflows</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300" id="openImprove">Improve</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300" id="openBack">Back-translate</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200" id="openAPI">API Payloads</button>
+      <button class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200" id="loadHash">Load URL</button>
+    </nav>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 pb-28">
-    <!-- Quick Build mirrors original, now upgraded -->
-    <section class="mt-6 grid lg:grid-cols-2 gap-4">
-      <!-- Builder -->
-      <article class="glass p-4 md:p-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">1) Build</h2>
-          <div class="flex gap-2">
-            <button id="openLibrary" class="btn px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300">Library (∞)</button>
-            <button id="loadHash" class="btn px-3 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300">Load URL</button>
-          </div>
-        </div>
-
-        <form id="form" class="mt-3 grid gap-3" autocomplete="off">
-          <!-- Domain + Pattern -->
-          <div class="grid md:grid-cols-2 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Domain</span>
-              <select id="domainSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Pattern (router suggests)</span>
-              <select id="patternSel" class="select w-full mt-1" multiple></select>
-              <p class="text-[11px] text-slate-500 mt-1">Tip: select 1–2 max. Router adds others if needed.</p>
-            </label>
-          </div>
-
-          <!-- Role -->
-          <div class="grid md:grid-cols-2 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Role (pick)</span>
-              <select id="roleSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Role (freeform)</span>
-              <input id="role" class="input w-full mt-1" placeholder="e.g., Senior Editor"/>
-            </label>
-          </div>
-
-          <!-- Task -->
-          <div class="grid md:grid-cols-2 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Task template</span>
-              <select id="taskSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Task (freeform)</span>
-              <input id="task" class="input w-full mt-1" placeholder="What must be done?"/>
-            </label>
-          </div>
-
-          <!-- Audience + Style/Tone -->
-          <div class="grid md:grid-cols-3 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Audience</span>
-              <select id="audSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Style</span>
-              <select id="styleSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Tone</span>
-              <select id="toneSel" class="select w-full mt-1"></select>
-            </label>
-          </div>
-
-          <!-- Inputs/Context -->
-          <div class="grid md:grid-cols-2 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Inputs/Context (select)</span>
-              <select id="inputsSel" class="select w-full mt-1" multiple></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Inputs/Context (text)</span>
-              <textarea id="inputs" rows="3" class="input w-full mt-1"></textarea>
-            </label>
-          </div>
-
-          <!-- Constraints -->
-          <div class="grid md:grid-cols-2 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Constraints (select)</span>
-              <select id="consSel" class="select w-full mt-1" multiple></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Constraints (text)</span>
-              <textarea id="constraints" rows="3" class="input w-full mt-1"></textarea>
-            </label>
-          </div>
-
-          <!-- Output Format + Verification + Next Action -->
-          <div class="grid md:grid-cols-3 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Output format</span>
-              <select id="formatSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Verification</span>
-              <select id="verifySel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Next Action</span>
-              <select id="nextSel" class="select w-full mt-1"></select>
-            </label>
-          </div>
-
-          <!-- Safety, Locale, Reading level -->
-          <div class="grid md:grid-cols-3 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Safety level</span>
-              <select id="safetySel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Locale</span>
-              <select id="localeSel" class="select w-full mt-1"></select>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Reading level</span>
-              <select id="readSel" class="select w-full mt-1"></select>
-            </label>
-          </div>
-
-          <!-- Length + Seed -->
-          <div class="grid md:grid-cols-3 gap-3">
-            <label class="block text-sm">
-              <span class="text-slate-300">Length limit (chars)</span>
-              <input id="len" type="number" min="100" max="20000" value="1200" class="input w-full mt-1 code"/>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Seed</span>
-              <input id="seed" type="number" value="1337" class="input w-full mt-1 code"/>
-            </label>
-            <label class="block text-sm">
-              <span class="text-slate-300">Branding (Shroomtop420®)</span>
-              <select id="brandSel" class="select w-full mt-1">
-                <option value="true">Include</option>
-                <option value="false">Exclude</option>
-              </select>
-            </label>
-          </div>
-
-          <!-- Actions -->
-          <div class="hr my-2"></div>
-          <div class="flex flex-wrap gap-2">
-            <button id="assemble" type="button" class="btn px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-medium">Assemble Prompt</button>
-            <button id="validate" type="button" class="btn px-4 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300">Validate</button>
-            <button id="copyPrompt" type="button" class="btn px-4 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300">Copy Prompt</button>
-            <button id="copyJSON" type="button" class="btn px-4 py-2 rounded-xl bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300">Copy JSON</button>
-            <button id="downloadJSON" type="button" class="btn px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300">Download JSON</button>
-            <button id="shareURL" type="button" class="btn px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300">Share URL</button>
-            <label class="btn px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 cursor-pointer">
-              Import JSON<input id="importJSON" type="file" accept="application/json" class="hidden">
-            </label>
-            <button id="reset" type="button" class="btn px-4 py-2 rounded-xl bg-[#182033] text-slate-200">Reset</button>
-          </div>
-        </form>
-      </article>
-
-      <!-- Output -->
-      <article class="glass p-4 md:p-6">
-        <h2 class="text-lg font-semibold">2) Review & Export</h2>
-        <div class="grid gap-3">
-          <div class="rounded-xl border border-[#2a2f43] bg-[#0f1220] p-3">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-slate-300">Assembled Prompt</p>
-              <span id="meta" class="text-[10px] text-slate-500 code">seed: — • chars: —</span>
-            </div>
-            <textarea id="promptOut" class="w-full h-64 code text-sm bg-transparent outline-none" readonly placeholder="Prompt will appear here…"></textarea>
-          </div>
-
-          <div class="rounded-xl border border-[#2a2f43] bg-[#0f1220] p-3">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-slate-300">Generated JSON (PromptConfig)</p>
-              <span class="text-[10px] text-slate-500 code">schema: 2025-06-13.04</span>
-            </div>
-            <pre id="jsonOut" class="max-h-60 overflow-auto code text-xs text-slate-300"></pre>
-          </div>
-
-          <div class="rounded-xl border border-[#2a2f43] p-3">
-            <p class="text-sm text-slate-300">Validation</p>
-            <ul id="valList" class="text-sm list-disc ml-4"></ul>
-          </div>
-
-          <div class="rounded-xl border border-[#2a2f43] p-3">
-            <p class="text-sm text-slate-300">Logs</p>
-            <pre id="logs" class="max-h-40 overflow-auto text-xs code text-slate-400"></pre>
-            <div class="flex gap-2 mt-2">
-              <button id="exportLogs" class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Export logs</button>
-              <button id="purgeLogs" class="btn px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300">Purge</button>
+  <main class="max-w-7xl mx-auto px-4 pb-32">
+    <section id="screens">
+      <!-- QUICK BUILD -->
+      <div id="screen-quick" class="mt-5 grid lg:grid-cols-2 gap-4">
+        <!-- Builder -->
+        <article class="glass p-4 md:p-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">1) Build</h2>
+            <div class="flex gap-2">
+              <button id="reset" type="button" class="btn px-3 py-2 rounded-xl bg-[#182033] text-slate-200">Reset</button>
             </div>
           </div>
-        </div>
-      </article>
-    </section>
 
-    <!-- Docs -->
-    <section class="mt-6 grid gap-4">
-      <details class="glass p-4 md:p-6">
-        <summary class="cursor-pointer text-lg font-semibold">README</summary>
-        <div class="prose prose-invert max-w-none">
-          <p><strong>Magic</strong> turns any intent into a safe, validated prompt. Use Quick picks, or open the Library to mix thousands of options. Deterministic assembly produces stable output. Export raw prompt or JSON.</p>
-          <ul>
-            <li>Slots: Role, Task, Inputs/Context, Constraints, Style/Tone, Output Format, Verification, Next Action.</li>
-            <li>Patterns: Planner, Coach, Critic, Generator, Summarizer, Explainer, Rubber-Duck, Refactorer, Test-Writer, SQL-Smith, DataFrame Analyst, UX Reviewer, Experiment Designer, Lesson Planner, Policy Drafter, Risk Assessor, Translator, Router.</li>
-            <li>Safety: Sensitive domains auto-inject disclaimers (legal/medical/financial). No hidden reasoning is requested.</li>
-          </ul>
-        </div>
-      </details>
+          <form id="form" class="mt-3 grid gap-3" autocomplete="off">
+            <!-- Domain + Pattern -->
+            <div class="grid md:grid-cols-2 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Domain</span>
+                <select id="domainSel" class="select w-full mt-1" aria-label="Domain"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Pattern (router suggests)</span>
+                <select id="patternSel" class="select w-full mt-1" multiple aria-label="Pattern"></select>
+                <p class="text-[11px] text-slate-500 mt-1">Tip: select 1–2 max. Router adds others if needed.</p>
+              </label>
+            </div>
 
-      <details class="glass p-4 md:p-6">
-        <summary class="cursor-pointer text-lg font-semibold">SECURITY.md (Summary)</summary>
-        <ul class="text-sm text-slate-300 list-disc ml-5">
-          <li>No secrets in code; offline by default; export is explicit.</li>
-          <li>Strict CSP; no external images; single origin only.</li>
-          <li>PWA SW caches app shell; no network writes.</li>
-          <li>Safety disclaimers; refusal path for unsafe asks.</li>
-        </ul>
-      </details>
+            <!-- Role -->
+            <div class="grid md:grid-cols-2 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Role (pick)</span>
+                <select id="roleSel" class="select w-full mt-1" aria-label="Role preset"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Role (freeform)</span>
+                <input id="role" class="input w-full mt-1" placeholder="e.g., Senior Editor" aria-describedby="roleHelp"/>
+                <small id="roleHelp" class="text-[11px] text-slate-500">Persona or vantage point for the model.</small>
+              </label>
+            </div>
+
+            <!-- Task -->
+            <div class="grid md:grid-cols-2 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Task template</span>
+                <select id="taskSel" class="select w-full mt-1" aria-label="Task template"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Task (freeform)</span>
+                <input id="task" class="input w-full mt-1" placeholder="What must be done?"/>
+              </label>
+            </div>
+
+            <!-- Audience + Style/Tone -->
+            <div class="grid md:grid-cols-3 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Audience</span>
+                <select id="audSel" class="select w-full mt-1"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Style</span>
+                <select id="styleSel" class="select w-full mt-1"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Tone</span>
+                <select id="toneSel" class="select w-full mt-1"></select>
+              </label>
+            </div>
+
+            <!-- Inputs/Context -->
+            <div class="grid md:grid-cols-2 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Inputs/Context (select)</span>
+                <select id="inputsSel" class="select w-full mt-1" multiple></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Inputs/Context (text)</span>
+                <textarea id="inputs" rows="3" class="input w-full mt-1" placeholder="Data, code, links, constraints, etc."></textarea>
+              </label>
+            </div>
+
+            <!-- Constraints -->
+            <div class="grid md:grid-cols-2 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Constraints (select)</span>
+                <select id="consSel" class="select w-full mt-1" multiple></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Constraints (text)</span>
+                <textarea id="constraints" rows="3" class="input w-full mt-1" placeholder="- Be concise…&#10;- Provide citations…"></textarea>
+              </label>
+            </div>
+
+            <!-- Output Format + Verification + Next Action -->
+            <div class="grid md:grid-cols-3 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Output format</span>
+                <select id="formatSel" class="select w-full mt-1"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Verification</span>
+                <select id="verifySel" class="select w-full mt-1"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Next Action</span>
+                <select id="nextSel" class="select w-full mt-1"></select>
+              </label>
+            </div>
+
+            <!-- Safety, Locale, Reading level -->
+            <div class="grid md:grid-cols-3 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Safety level</span>
+                <select id="safetySel" class="select w-full mt-1"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Locale</span>
+                <select id="localeSel" class="select w-full mt-1"></select>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Reading level</span>
+                <select id="readSel" class="select w-full mt-1"></select>
+              </label>
+            </div>
+
+            <!-- Length + Seed + Branding -->
+            <div class="grid md:grid-cols-3 gap-3">
+              <label class="block text-sm">
+                <span class="text-slate-300">Length limit (chars)</span>
+                <input id="len" type="number" min="100" max="20000" value="1200" class="input w-full mt-1 code"/>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Seed</span>
+                <input id="seed" type="number" value="1337" class="input w-full mt-1 code"/>
+              </label>
+              <label class="block text-sm">
+                <span class="text-slate-300">Branding (Shroomtop420®)</span>
+                <select id="brandSel" class="select w-full mt-1">
+                  <option value="true">Include</option>
+                  <option value="false">Exclude</option>
+                </select>
+              </label>
+            </div>
+
+            <!-- Actions -->
+            <div class="hr my-2"></div>
+            <div class="flex flex-wrap gap-2">
+              <button id="assemble" type="button" class="btn px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-medium">Assemble Prompt</button>
+              <button id="validate" type="button" class="btn px-4 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300">Validate</button>
+              <button id="copyPrompt" type="button" class="btn px-4 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300">Copy Prompt</button>
+              <button id="copyJSON" type="button" class="btn px-4 py-2 rounded-xl bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300">Copy JSON</button>
+              <button id="downloadJSON" type="button" class="btn px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300">Download JSON</button>
+              <button id="exportMD" type="button" class="btn px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300">Download .md</button>
+              <button id="shareURL" type="button" class="btn px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300">Share URL</button>
+              <label class="btn px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 cursor-pointer">
+                Import JSON<input id="importJSON" type="file" accept="application/json" class="hidden">
+              </label>
+              <button id="importClipboard" type="button" class="btn px-3 py-2 rounded-xl bg-[#182033] text-slate-200">Import from Clipboard</button>
+            </div>
+          </form>
+        </article>
+
+        <!-- Output -->
+        <article class="glass p-4 md:p-6">
+          <h2 class="text-lg font-semibold">2) Review & Export</h2>
+          <div class="grid gap-3">
+            <div class="rounded-xl border border-[#2a2f43] bg-[#0f1220] p-3">
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-slate-300">Assembled Prompt</p>
+                <span id="meta" class="text-[10px] text-slate-500 code">seed: — • chars: — • words: —</span>
+              </div>
+              <textarea id="promptOut" class="w-full h-64 code text-sm bg-transparent outline-none" readonly placeholder="Prompt will appear here…"></textarea>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button id="copySystemUser" class="btn px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300">Copy System+User Blocks</button>
+                <button id="copyOpenAI" class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Copy OpenAI Payload</button>
+                <button id="copyAnthropic" class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Copy Anthropic Payload</button>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-[#2a2f43] bg-[#0f1220] p-3">
+              <div class="flex items-center justify-between">
+                <p class="text-sm text-slate-300">Generated JSON (PromptConfig)</p>
+                <span class="text-[10px] text-slate-500 code">schema: 2025-06-13.04</span>
+              </div>
+              <pre id="jsonOut" class="max-h-60 overflow-auto code text-xs text-slate-300"></pre>
+            </div>
+
+            <div class="rounded-xl border border-[#2a2f43] p-3">
+              <p class="text-sm text-slate-300">Validation</p>
+              <ul id="valList" class="text-sm list-disc ml-4"></ul>
+            </div>
+
+            <div class="rounded-xl border border-[#2a2f43] p-3">
+              <p class="text-sm text-slate-300">Logs</p>
+              <pre id="logs" class="max-h-40 overflow-auto text-xs code text-slate-400"></pre>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <button id="exportLogs" class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Export logs</button>
+                <button id="purgeLogs" class="btn px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300">Purge</button>
+                <label class="text-xs flex items-center gap-2"><input type="checkbox" id="persist" class="accent-emerald-400"> Persist configs to localStorage</label>
+                <label class="text-xs flex items-center gap-2"><input type="checkbox" id="strictMode" class="accent-emerald-400" checked> Strict safety mode</label>
+                <label class="text-xs flex items-center gap-2"><input type="checkbox" id="rtlToggle" class="accent-emerald-400"> RTL layout</label>
+                <label class="text-xs flex items-center gap-2"><input type="checkbox" id="liveAssemble" class="accent-emerald-400"> Live assemble</label>
+              </div>
+            </div>
+
+            <details class="rounded-xl border border-[#2a2f43] p-3">
+              <summary class="cursor-pointer text-sm text-slate-300">README / SECURITY</summary>
+              <div class="text-sm text-slate-300 mt-2 space-y-2">
+                <p><strong>Magic</strong> turns any intent into a safe, validated prompt. Use Quick picks or open the Library/Template/Workflow panels. Deterministic assembly produces stable output. Export raw prompt or JSON config. Offline by default.</p>
+                <ul class="list-disc ml-6">
+                  <li>Slots: Role, Task, Inputs/Context, Constraints, Style/Tone, Output Format, Verification, Next Action.</li>
+                  <li>Patterns: Planner, Coach, Critic, Generator, Summarizer, Explainer, Rubber-Duck, Refactorer, Test-Writer, SQL-Smith, DataFrame Analyst, UX Reviewer, Experiment Designer, Lesson Planner, Policy Drafter, Risk Assessor, Translator, Router.</li>
+                  <li>Security: Strict CSP, no secrets, PWA cache of app shell only, refusal path for unsafe asks. No external images.</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </article>
+      </div>
+
+      <!-- ADVANCED (same form + extras) -->
+      <div id="screen-advanced" class="hidden mt-5 grid lg:grid-cols-2 gap-4">
+        <article class="glass p-4 md:p-6">
+          <h2 class="text-lg font-semibold">Advanced Editor</h2>
+          <div class="grid gap-3 mt-2">
+            <label class="text-sm">Audience (freeform)
+              <input id="audienceFree" class="input w-full mt-1" placeholder="e.g., Informed Designers"/>
+            </label>
+            <label class="text-sm">Verification (freeform)
+              <input id="verificationFree" class="input w-full mt-1" placeholder="e.g., List sources with links"/>
+            </label>
+            <label class="text-sm">Next Action (freeform)
+              <input id="nextFree" class="input w-full mt-1" placeholder="e.g., Offer 3 title options"/>
+            </label>
+            <label class="text-sm">References (comma separated)
+              <input id="refs" class="input w-full mt-1" placeholder="https://doi.org/... , https://..."/>
+            </label>
+            <div class="grid md:grid-cols-3 gap-3">
+              <label class="text-sm">Include System Block
+                <select id="sysOpt" class="select w-full mt-1"><option>Yes</option><option>No</option></select>
+              </label>
+              <label class="text-sm">System Style
+                <select id="sysStyle" class="select w-full mt-1">
+                  <option>Default Safety</option><option>Concise</option><option>Research</option><option>Developer</option>
+                </select>
+              </label>
+              <label class="text-sm">API Preset
+                <select id="apiPreset" class="select w-full mt-1">
+                  <option value="openai">OpenAI: gpt-4.1 (temp 0.2)</option>
+                  <option value="anthropic">Anthropic: Claude 3.5 (temp 0.2)</option>
+                </select>
+              </label>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <button id="saveTemplate" class="btn px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300">Save as Template (local)</button>
+              <button id="clearStorage" class="btn px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-300">Clear Local Templates</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="glass p-4 md:p-6">
+          <h2 class="text-lg font-semibold">Golden Tests (offline)</h2>
+          <p class="text-sm text-slate-300">Run quick checks on 24 domain templates for disclaimer & structure.</p>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <button id="runTests" class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Run Tests</button>
+            <pre id="testOut" class="max-h-64 overflow-auto code text-xs text-slate-300 w-full mt-2"></pre>
+          </div>
+          <h3 class="mt-4 font-semibold text-sm">i18n</h3>
+          <div class="grid sm:grid-cols-3 gap-2 mt-1">
+            <label class="text-sm">UI Language
+              <select id="uiLang" class="select w-full mt-1"><option value="en">English</option><option value="es">Español</option></select>
+            </label>
+            <label class="text-sm">Example Locale
+              <select id="exLocale" class="select w-full mt-1"><option>en-US</option><option>es-ES</option></select>
+            </label>
+            <label class="text-sm">Reduced Motion
+              <select id="reducedMotion" class="select w-full mt-1"><option>No</option><option>Yes</option></select>
+            </label>
+          </div>
+        </article>
+      </div>
     </section>
   </main>
 
-  <footer class="max-w-6xl mx-auto px-4 pb-12 text-slate-500 text-xs flex items-center justify-between">
+  <footer class="max-w-7xl mx-auto px-4 pb-12 text-slate-500 text-xs flex items-center justify-between">
     <span>© <span id="yr"></span> Shroomtop420® • Neon/Futuristic • Single-File</span>
     <span class="code">CSP strict • Offline SW • No secrets</span>
   </footer>
 
-  <!-- Global Library Modal -->
+  <!-- Library Modal -->
   <div id="libraryModal" class="modal" aria-hidden="true">
     <div class="panel">
       <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto">
@@ -331,14 +404,133 @@ Notes:
               <option value="constraints">Constraints</option><option value="verification">Verification</option><option value="nextAction">Next Action</option>
             </select>
           </label>
-          <button id="libInsert" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-emerald-500/10 text-emerald-300">Insert Selected</button>
-          <button id="libClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+          <div class="flex gap-2 mt-2">
+            <button id="libInsert" class="btn w-full rounded-lg px-3 py-2 bg-emerald-500/10 text-emerald-300">Insert Selected</button>
+            <button id="libClose" class="btn w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+          </div>
+          <div class="flex gap-2 mt-2">
+            <input id="libCustom" class="select code w-full" placeholder="Add custom option…">
+            <button id="libAdd" class="btn rounded-lg px-3 py-2 bg-sky-500/10 text-sky-300">Add</button>
+          </div>
         </div>
         <div id="tabs" class="mt-2"></div>
       </aside>
       <section class="bg-[#0b0e17] p-4 overflow-auto">
-        <div id="tabTitle" class="text-sm text-slate-300 mb-2">Options</div>
+        <div class="flex items-center justify-between">
+          <div id="tabTitle" class="text-sm text-slate-300 mb-2">Options</div>
+          <label class="text-xs flex items-center gap-2"><input type="checkbox" id="showCustoms" class="accent-emerald-400"> Show custom items</label>
+        </div>
         <div id="listbox" class="listbox"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div id="templatesModal" class="modal">
+    <div class="panel">
+      <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto">
+        <div class="p-3">
+          <div class="text-slate-300 text-sm font-semibold">Templates (24 Domains)</div>
+          <div class="text-[11px] text-slate-500">Click a template to load into Builder.</div>
+          <button id="templatesClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+        </div>
+        <div id="templatesList" class="listbox p-3"></div>
+      </aside>
+      <section class="bg-[#0b0e17] p-4 overflow-auto">
+        <div class="text-sm text-slate-300 mb-2">Preview</div>
+        <pre id="templatePreview" class="code text-xs text-slate-300 max-h-[75vh] overflow-auto"></pre>
+      </section>
+    </div>
+  </div>
+
+  <!-- Workflows Modal -->
+  <div id="workflowsModal" class="modal">
+    <div class="panel">
+      <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto">
+        <div class="p-3">
+          <div class="text-slate-300 text-sm font-semibold">Compound Workflows</div>
+          <div class="text-[11px] text-slate-500">Select a chain; generate multi-step prompt.</div>
+          <button id="workflowsClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+        </div>
+        <div id="workflowsList" class="listbox p-3"></div>
+      </aside>
+      <section class="bg-[#0b0e17] p-4 overflow-auto">
+        <div class="text-sm text-slate-300 mb-2">Workflow Output</div>
+        <textarea id="workflowOut" class="w-full h-[70vh] code text-xs bg-transparent outline-none"></textarea>
+        <div class="flex gap-2 mt-2">
+          <button id="copyWorkflow" class="btn px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300">Copy</button>
+          <button id="useWorkflow" class="btn px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-300">Use as Prompt</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Improve Modal -->
+  <div id="improveModal" class="modal">
+    <div class="panel">
+      <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto p-3">
+        <div class="text-slate-300 text-sm font-semibold">Improve This Prompt</div>
+        <div class="text-[11px] text-slate-500">Local heuristic critic. No network.</div>
+        <button id="improveClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+        <div class="mt-3 text-slate-300 text-xs">Checks:</div>
+        <ul class="text-[11px] text-slate-400 ml-4 list-disc">
+          <li>JSON/Code output hints present</li>
+          <li>Disclaimers for sensitive domains</li>
+          <li>Length & redundancy</li>
+          <li>Missing audience / format</li>
+        </ul>
+      </aside>
+      <section class="bg-[#0b0e17] p-4 overflow-auto">
+        <textarea id="improveSrc" class="w-full h-48 code text-xs bg-transparent outline-none" placeholder="Paste or auto-filled with current prompt…"></textarea>
+        <div class="flex gap-2 mt-2">
+          <button id="runImprove" class="btn px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300">Analyze & Suggest</button>
+          <button id="applyImprove" class="btn px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-300">Apply Suggestions</button>
+        </div>
+        <pre id="improveOut" class="code text-xs text-slate-300 max-h-[60vh] overflow-auto mt-2"></pre>
+      </section>
+    </div>
+  </div>
+
+  <!-- Back-translate Modal -->
+  <div id="backModal" class="modal">
+    <div class="panel">
+      <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto p-3">
+        <div class="text-slate-300 text-sm font-semibold">Back-translate</div>
+        <div class="text-[11px] text-slate-500">Paste model output → infer prompt tweaks.</div>
+        <button id="backClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+      </aside>
+      <section class="bg-[#0b0e17] p-4 overflow-auto">
+        <textarea id="backIn" class="w-full h-48 code text-xs bg-transparent outline-none" placeholder="Paste model output here…"></textarea>
+        <div class="flex gap-2 mt-2">
+          <button id="runBack" class="btn px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300">Analyze Output</button>
+          <button id="applyBack" class="btn px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-300">Apply to Config</button>
+        </div>
+        <pre id="backOut" class="code text-xs text-slate-300 max-h-[60vh] overflow-auto mt-2"></pre>
+      </section>
+    </div>
+  </div>
+
+  <!-- API Payloads Modal -->
+  <div id="apiModal" class="modal">
+    <div class="panel">
+      <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto p-3">
+        <div class="text-slate-300 text-sm font-semibold">API Payloads (stubs)</div>
+        <div class="text-[11px] text-slate-500">No keys. Copy-only.</div>
+        <button id="apiClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+      </aside>
+      <section class="bg-[#0b0e17] p-4 overflow-auto">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <div class="text-sm text-slate-300 mb-1">OpenAI Chat Completions</div>
+            <pre id="openaiOut" class="code text-xs text-slate-300 max-h-[60vh] overflow-auto"></pre>
+            <button id="copyOpenAI2" class="btn mt-2 px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Copy</button>
+          </div>
+          <div>
+            <div class="text-sm text-slate-300 mb-1">Anthropic Messages</div>
+            <pre id="anthropicOut" class="code text-xs text-slate-300 max-h-[60vh] overflow-auto"></pre>
+            <button id="copyAnthropic2" class="btn mt-2 px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Copy</button>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -355,76 +547,86 @@ Notes:
     const SCHEMA_VERSION = "2025-06-13.04";
     const clamp = (n,min,max)=>Math.min(Math.max(Number(n)||0,min),max);
     const esc = s => String(s||'').replace(/[^\n\r\t -~]/g,'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const tsv = (arr)=>arr.map(x=>`- ${x}`).join('\n');
-    function l(msg,data) { const line = JSON.stringify({ts:Date.now(),msg,data}); logEl.textContent += line + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+    const nl = s => String(s||'').replace(/\r\n/g,'\n');
+    const words = s => (s.trim().match(/\S+/g)||[]).length;
+    const copy = async t => { try{ await navigator.clipboard.writeText(t||''); }catch{} };
+    function l(msg,data) { const line = JSON.stringify({ts:new Date().toISOString(),msg,data}); logEl.textContent += line + "\n"; logEl.scrollTop = logEl.scrollHeight; }
 
-    // ---------- Options (curated, extensible) ----------
+    // ---------- Options (expanded) ----------
     const DOMAINS = ["Writing","Coding","Data Analysis","Math/Reasoning","Education/Tutoring","Research & Citations","Translation/Localization","Creative Ideation","Marketing","Sales/Prospecting","Product/UX","Project Management","Operations/Process","Customer Support","DevOps/Cloud","Data Engineering","Legal (non-advisory)","Medical/Health (non-diagnostic)","Financial (non-advisory)","Career/HR","Resume/Interview","Planning/Travel","Personal Productivity","Misc/Custom"];
     const PATTERNS = ["Router","Planner","Coach","Critic","Generator","Summarizer","Explainer","Rubber-Duck","Refactorer","Test-Writer","SQL-Smith","DataFrame Analyst","UX Reviewer","Experiment Designer","Lesson Planner","Policy Drafter","Risk Assessor","Translator"];
-    const ROLES = ["Senior Editor","Refactoring Engineer","Data Analyst","Problem Solver","Tutor","Research Summarizer","Localization Specialist","Copy Generator","Marketing Strategist","Sales Writer","UX Reviewer","Project Planner","SOP Designer","Support Guide","DevOps Planner","Data Engineer","Policy Analyst","Health Explainer","Finance Explainer","Career Coach","Interview Coach","Travel Planner","Productivity Coach","General Assistant","Founder/CEO","Full-Stack Engineer","Prompt Engineer"];
-    const AUDIENCES = ["Executives","Developers (Junior)","Developers (Senior)","Designers","Investors","Researchers","Students","Customers","Community","General Public","Regulators","QA Team","Security Review Board"];
+    const ROLES = ["Senior Editor","Refactoring Engineer","Data Analyst","Problem Solver","Tutor","Research Summarizer","Localization Specialist","Copy Generator","Marketing Strategist","Sales Writer","UX Reviewer","Project Planner","SOP Designer","Support Guide","DevOps Planner","Data Engineer","Policy Analyst","Health Explainer","Finance Explainer","Career Coach","Interview Coach","Travel Planner","Productivity Coach","General Assistant","Founder/CEO","Full-Stack Engineer","Prompt Engineer","Growth PM","Security Architect","Data Scientist"];
+    const AUDIENCES = ["Executives","Developers (Junior)","Developers (Senior)","Designers","Investors","Researchers","Students","Customers","Community","General Public","Regulators","QA Team","Security Review Board","Parents/Caregivers"];
     const STYLES = ["Neon/Futuristic","Modern/Minimalist","Formal/Concise","Didactic/Coach","Playful","Academic","Journalistic","Sales","Legalese","Accessible","Custom"];
     const TONES = ["Neutral","Confident","Skeptical","Encouraging","Direct","Cautious","Creative","Authoritative","Friendly"];
-    const INPUTS = ["Provided text/data only","Schema with examples","Links (trusted)","Screenshots (described)","Assumptions list","Acceptance criteria"];
-    const CONSTRAINTS = ["Be concise (≤ lengthLimit)","No speculation; mark assumptions","Provide citations for factual claims","No external images; SVG only","Single file; CDN allowed","No secrets; refuse unsafe asks","Include acceptance tests","Mobile-first & a11y","JSON-safe if applicable"];
+    const INPUTS = ["Provided text/data only","Schema with examples","Links (trusted)","Screenshots (described)","Assumptions list","Acceptance criteria","Company policy excerpt","Job description","Snippet of code","API schema (OpenAPI)","CSV header + sample rows"];
+    const CONSTRAINTS = ["Be concise (≤ lengthLimit)","No speculation; mark assumptions","Provide citations for factual claims","No external images; SVG only","Single file; CDN allowed","No secrets; refuse unsafe asks","Include acceptance tests","Mobile-first & a11y","JSON-safe if applicable","Return code blocks fenced","Avoid chain-of-thought; final answers only","Respect locale & reading level"];
     const FORMATS = ["Markdown","Plaintext","JSON","HTML","CSV","Code"];
-    const VERIFY = ["List sources with links","Show assumptions","Add acceptance checks","Provide test cases","Include risk/ethics note","Validate JSON/Markdown"];
-    const NEXT = ["Offer 3 title options","Ask up to 2 clarifying questions if critical","Propose next iteration","Generate tests","Summarize key trade-offs"];
+    const VERIFY = ["List sources with links","Show assumptions","Add acceptance checks","Provide test cases","Include risk/ethics note","Validate JSON/Markdown","Double-check calculations","Quote exact lines for claims"];
+    const NEXT = ["Offer 3 title options","Ask up to 2 clarifying questions if critical","Propose next iteration","Generate tests","Summarize key trade-offs","Suggest 2 alternative approaches"];
     const SAFETY = ["General","Sensitive-Legal","Sensitive-Medical","Sensitive-Financial","Youth"];
     const LOCALES = ["en-US","en-GB","es-ES","fr-FR","de-DE","pt-BR","hi-IN","ar","zh-CN","ja-JP","ko-KR"];
     const READING = ["Child","Teen","Adult-General","Expert"];
 
+    // Task templates by domain
     const TASK_TEMPLATES = {
       "Writing":[
         "Write a 600-word explainer on <topic> for <audience>",
         "Draft a press release announcing <product>",
-        "Create a 7-part outline with key points and sources"
+        "Create a 7-part outline with key points and sources",
+        "Rewrite copy to be clearer and more concise"
       ],
       "Coding":[
         "Refactor the given code and add unit tests",
         "Generate a single-file app using <stack>",
-        "Write a CLI tool to <goal> with examples"
+        "Write a CLI tool to <goal> with examples",
+        "Explain and fix the following bug"
       ],
       "Data Analysis":[
         "Profile dataset (cols: <cols>) and report anomalies",
         "Design analysis plan with KPIs and charts",
-        "Summarize insights with limitations"
+        "Summarize insights with limitations",
+        "Propose data cleaning steps and checks"
       ],
       "Marketing":[
         "Create 5 landing headlines and 3 CTAs",
         "Draft an email sequence for <persona>",
-        "Write ad copy variants (<=60 chars)"
+        "Write ad copy variants (<=60 chars)",
+        "Map benefits to features with proof points"
       ],
       "Misc/Custom":[
         "Given the goal <goal>, produce an action plan with steps",
         "Summarize the following content with citations",
-        "Generate 10 ideas with scoring criteria"
+        "Generate 10 ideas with scoring criteria",
+        "Draft a decision memo with options and trade-offs"
       ]
     };
 
     // ---------- Populate selects ----------
-    function fill(id, items, withEmpty=false){ const el = byId(id); el.innerHTML=''; if(withEmpty){ const o=document.createElement('option'); o.value=''; o.textContent='— choose —'; el.appendChild(o); } items.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); }); }
-    fill('domainSel', DOMAINS);
-    fill('patternSel', PATTERNS);
-    fill('roleSel', ROLES, true);
-    fill('taskSel', TASK_TEMPLATES["Misc/Custom"], true);
-    fill('audSel', AUDIENCES, true);
-    fill('styleSel', STYLES);
-    fill('toneSel', TONES);
-    fill('inputsSel', INPUTS);
-    fill('consSel', CONSTRAINTS);
-    fill('formatSel', FORMATS);
-    fill('verifySel', VERIFY);
-    fill('nextSel', NEXT);
-    fill('safetySel', SAFETY);
-    fill('localeSel', LOCALES);
-    fill('readSel', READING);
+    function fill(id, items, withEmpty=false){ const el = byId(id); el.innerHTML=''; if(withEmpty){ const o=document.createElement('option'); o.value=''; o.textContent='—'; el.appendChild(o); } items.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); }); }
+    function ensureDomOptions(){
+      fill('domainSel', DOMAINS);
+      fill('patternSel', PATTERNS);
+      fill('roleSel', ROLES, true);
+      fill('taskSel', TASK_TEMPLATES["Misc/Custom"], true);
+      fill('audSel', AUDIENCES, true);
+      fill('styleSel', STYLES);
+      fill('toneSel', TONES);
+      fill('inputsSel', INPUTS);
+      fill('consSel', CONSTRAINTS);
+      fill('formatSel', FORMATS);
+      fill('verifySel', VERIFY);
+      fill('nextSel', NEXT);
+      fill('safetySel', SAFETY);
+      fill('localeSel', LOCALES);
+      fill('readSel', READING);
+    }
+    ensureDomOptions();
 
-    // Update task templates when domain changes
+    // Suggest patterns when domain changes + update task templates
     byId('domainSel').addEventListener('change', e=>{
       const d = e.target.value;
       fill('taskSel', (TASK_TEMPLATES[d]||TASK_TEMPLATES["Misc/Custom"]), true);
-      // Suggest patterns per domain
       const suggest = {
         "Writing":["Generator","Critic"], "Coding":["Refactorer","Test-Writer"],
         "Data Analysis":["DataFrame Analyst","Explainer"], "Math/Reasoning":["Explainer","Planner"],
@@ -455,11 +657,11 @@ Notes:
     }
     bindSelectToField('roleSel','role');
     bindSelectToField('taskSel','task');
-    bindSelectToField('audSel','role',true); // audience hints influence role wording if desired
+    bindSelectToField('audSel','audienceFree'); // keep audience explicit in Advanced
     bindSelectToField('inputsSel','inputs',true);
     bindSelectToField('consSel','constraints',true);
-    bindSelectToField('verifySel','constraints',true);
-    bindSelectToField('nextSel','constraints',true);
+    bindSelectToField('verifySel','verificationFree'); // adds to free verification
+    bindSelectToField('nextSel','nextFree'); // adds to free next action
 
     // ---------- Config helpers ----------
     function selected(id){ return Array.from(byId(id).selectedOptions).map(o=>o.value); }
@@ -474,28 +676,28 @@ Notes:
         style: byId('styleSel').value || "Modern/Minimalist",
         tone: byId('toneSel').value || "Neutral",
         outputFormat: byId('formatSel').value || "Markdown",
-        verification: selected('verifySel')[0] || "",
-        nextAction: selected('nextSel')[0] || "",
+        verification: esc(byId('verificationFree').value || selected('verifySel')[0] || ""),
+        nextAction: esc(byId('nextFree').value || selected('nextSel')[0] || ""),
         domain,
         pattern: selected('patternSel')[0] || "Router",
-        audience: selected('audSel')[0] || "",
+        audience: esc(byId('audienceFree').value || selected('audSel')[0] || ""),
         lengthLimit: clamp(byId('len').value, 100, 20000),
-        references: [],
+        references: (byId('refs').value||'').split(',').map(s=>s.trim()).filter(Boolean),
         safetyLevel: byId('safetySel').value || (["Legal (non-advisory)","Medical/Health (non-diagnostic)","Financial (non-advisory)"].includes(domain) ? "Sensitive-"+domain.split(' ')[0] : "General"),
         locale: byId('localeSel').value || "en-US",
         readingLevel: byId('readSel').value || "Adult-General",
         seed: clamp(byId('seed').value, 0, 4294967295),
-        branding: byId('brandSel').value === "true"
+        branding: byId('brandSel').value === "true",
+        systemBlock: byId('sysOpt')?.value==="Yes",
+        systemStyle: byId('sysStyle')?.value||"Default Safety"
       };
       return cfg;
     }
 
-    // ---------- Assembly ----------
-    function disclaimer(safety, domain){
+    function disclaimer(safety){
       if(safety==="Sensitive-Legal") return "This is educational information, not legal advice. Consult a qualified attorney.";
       if(safety==="Sensitive-Medical") return "This is educational information, not medical advice. Consult a licensed clinician.";
       if(safety==="Sensitive-Financial") return "This is informational content, not investment advice. Consider professional guidance.";
-      if(domain==="Youth") return "Use age-appropriate language and content. Avoid sensitive or harmful material.";
       return "";
     }
     function assemblePrompt(cfg){
@@ -503,15 +705,19 @@ Notes:
       blocks.push(`ROLE: ${cfg.role}`);
       blocks.push(`TASK: ${cfg.task}`);
       if(cfg.audience) blocks.push(`AUDIENCE: ${cfg.audience}`);
-      if(cfg.inputs) blocks.push(`INPUTS/CONTEXT:\n${cfg.inputs}`);
-      if(cfg.constraints) blocks.push(`CONSTRAINTS:\n${cfg.constraints.split('\n').map(s=>s.startsWith('- ')?s:('- '+s)).join('\n')}`);
+      if(cfg.inputs) blocks.push(`INPUTS/CONTEXT:\n${nl(cfg.inputs)}`);
+      if(cfg.constraints){
+        const bullets = nl(cfg.constraints).split('\n').filter(Boolean).map(s=>s.startsWith('- ')?s:('- '+s)).join('\n');
+        blocks.push(`CONSTRAINTS:\n${bullets}`);
+      }
       blocks.push(`STYLE/TONE: ${cfg.style} | ${cfg.tone}`);
       blocks.push(`OUTPUT FORMAT: ${cfg.outputFormat}`);
       if(cfg.verification) blocks.push(`VERIFICATION: ${cfg.verification}`);
       if(cfg.nextAction) blocks.push(`NEXT ACTION: ${cfg.nextAction}`);
+      if(cfg.references?.length) blocks.push(`REFERENCES:\n${cfg.references.map(x=>'- '+x).join('\n')}`);
       blocks.push(`PATTERN: ${cfg.pattern}`);
       blocks.push(`GUIDANCE:\n- Do not reveal hidden reasoning or chain-of-thought.\n- Cite sources for factual claims or state uncertainty.\n- Follow safety policies. Refuse unsafe requests with alternatives.`);
-      const disc = disclaimer(cfg.safetyLevel, cfg.domain);
+      const disc = disclaimer(cfg.safetyLevel);
       if(disc) blocks.push(`DISCLAIMER: ${disc}`);
       let prompt = blocks.join('\n\n');
       if(prompt.length > cfg.lengthLimit) prompt = prompt.slice(0, cfg.lengthLimit);
@@ -519,25 +725,31 @@ Notes:
     }
 
     // ---------- Validation ----------
-    function validateCfg(cfg){
+    function validateCfg(cfg, prompt){
       const errs=[], warns=[];
       if(!cfg.role || cfg.role.length<3) errs.push("Role is required (≥3 chars).");
       if(!cfg.task || cfg.task.length<5) errs.push("Task is required (≥5 chars).");
       if(!cfg.outputFormat) errs.push("Output format is required.");
-      // Domain-specific safety
+      // Domain/pattern-specific
+      if((cfg.domain==="Coding" || cfg.pattern==="Refactorer" || cfg.pattern==="Test-Writer") && !cfg.inputs) errs.push("Coding tasks typically require code or a snippet in Inputs.");
+      if(cfg.domain==="Education/Tutoring" && !cfg.audience) errs.push("Audience (learner level) is required for tutoring tasks.");
+      // Sensitive domains
       if(["Legal (non-advisory)","Medical/Health (non-diagnostic)","Financial (non-advisory)"].includes(cfg.domain)){
         if(!cfg.safetyLevel.startsWith("Sensitive")) warns.push("Sensitive domain detected; safety disclaimer will be injected.");
+        if(!disclaimer(cfg.safetyLevel)) warns.push("Consider setting safetyLevel to inject a non-advisory disclaimer.");
       }
+      // Output format hints
+      if(cfg.outputFormat==="JSON" && !/json|strict/i.test((cfg.constraints||"") + (cfg.verification||""))) warns.push("Output is JSON, add a hint like 'Return strictly valid JSON' or enable verification.");
+      if(cfg.outputFormat==="Code" && !/code|tests|fence/i.test((cfg.constraints||"")+cfg.task)) warns.push("Code output requested; include specifics (language, tests, fences).");
       // Length bounds
-      if(cfg.lengthLimit<100 || cfg.lengthLimit>20000) errs.push("lengthLimit out of bounds.");
-      // Formatting expectations
-      if(cfg.outputFormat==="JSON"){
-        if(!/json/i.test(cfg.constraints+cfg.verification+cfg.task)) warns.push("Output is JSON but no JSON-specific instruction found.");
-      }
+      if(cfg.lengthLimit<100 || cfg.lengthLimit>20000) errs.push("lengthLimit out of bounds (100–20000).");
+      if(prompt.length>cfg.lengthLimit) errs.push("Assembled prompt exceeds lengthLimit (unexpected after trimming).");
+      // Weak task copy
+      if(cfg.task && cfg.task.toLowerCase().includes("describe your goal")) warns.push("Task looks generic; provide a concrete objective.");
       return {ok: errs.length===0, errors:errs, warnings:warns};
     }
 
-    // ---------- Renderers ----------
+    // ---------- Rendering ----------
     function renderValidation(res){
       valList.innerHTML='';
       if(res.errors.length===0 && res.warnings.length===0){
@@ -549,10 +761,10 @@ Notes:
     function renderJSON(cfg){
       const out = {
         schema_version: cfg.schema_version,
-        project_type: "Web Tool/App",              // legacy compatibility field
+        project_type: "Web Tool/App",
         topic: cfg.task.slice(0,90),
         style: cfg.style,
-        stack: "HTML5 + Tailwind CSS + ES6 JS",    // default stack; adjust in constraints if needed
+        stack: "HTML5 + Tailwind CSS + ES6 JS",
         format: cfg.outputFormat==="Code" ? "Plain code (no block)" : "Single HTML file",
         features: [],
         special_requests: [],
@@ -562,11 +774,10 @@ Notes:
           "All CSS/JS must be inline or via CDN",
           "Use semantic, accessible HTML and responsive layout",
           "No external image dependencies (SVG/CSS/HTML only)",
-          "Match this structure: [headline/subheadline][main diagram/feature][clean, centered, visually balanced]",
+          "Match structure: [headline/subheadline][main feature][clean, centered]",
           "Do not reveal hidden reasoning; provide final answers only"
         ],
         end_instruction: "Ready to copy-paste and run.",
-        // Canonical config (authoritative)
         config: {
           role: cfg.role, task: cfg.task, inputs: cfg.inputs, constraints: cfg.constraints,
           style: cfg.style, tone: cfg.tone, outputFormat: cfg.outputFormat,
@@ -577,51 +788,114 @@ Notes:
         }
       };
       jsonOut.textContent = JSON.stringify(out, null, 2);
+      // API payloads (for modal)
+      const sys = (getSystemBlock(cfg));
+      byId('openaiOut').textContent = JSON.stringify({
+        model: "gpt-4.1",
+        temperature: 0.2,
+        top_p: 0.9,
+        messages: [
+          ...(cfg.systemBlock?[{role:"system",content:sys}]:[]),
+          {role:"user",content: promptOut.value || ""}
+        ]
+      }, null, 2);
+      byId('anthropicOut').textContent = JSON.stringify({
+        model: "claude-3-5-sonnet",
+        temperature: 0.2,
+        max_tokens: 800,
+        messages: [
+          ...(cfg.systemBlock?[{role:"system",content:sys}]:[]),
+          {role:"user",content: promptOut.value || ""}
+        ]
+      }, null, 2);
+    }
+
+    // ---------- System block ----------
+    function getSystemBlock(cfg){
+      const base = [
+        "Follow safety policies.",
+        "Never reveal hidden reasoning or chain-of-thought; provide concise final answers.",
+        "If a request is unsafe or disallowed, refuse and suggest safe alternatives."
+      ];
+      if(cfg.systemStyle==="Concise") base.unshift("Answer concisely.");
+      if(cfg.systemStyle==="Research") base.push("Prefer citations and note uncertainty when applicable.");
+      if(cfg.systemStyle==="Developer") base.push("Use exact, reproducible steps and code fences where relevant.");
+      return base.join(' ');
     }
 
     // ---------- Actions ----------
-    function assembleAndRender(){
+    let assembleCooldown=false;
+    function assembleAndRender(manual=false){
+      if(assembleCooldown) return;
+      assembleCooldown=true; setTimeout(()=>assembleCooldown=false, 400); // UI rate-limit
       const cfg = getConfig();
-      const val = validateCfg(cfg); renderValidation(val);
-      const prompt = assemblePrompt(cfg);
+      let prompt = assemblePrompt(cfg);
+      const val = validateCfg(cfg, prompt);
+      renderValidation(val);
       promptOut.value = prompt;
-      metaEl.textContent = `seed: ${cfg.seed} • chars: ${prompt.length}`;
+      metaEl.textContent = `seed: ${cfg.seed} • chars: ${prompt.length} • words: ${words(prompt)}`;
       renderJSON(cfg);
-      l('assemble', {domain:cfg.domain, pattern:cfg.pattern, len:prompt.length});
+      if(byId('persist').checked){
+        try{ localStorage.setItem('magic_last_cfg', JSON.stringify(cfg)); }catch{}
+      }
+      l('assemble', {domain:cfg.domain, pattern:cfg.pattern, len:prompt.length, ok:val.ok});
     }
 
-    byId('assemble').addEventListener('click', assembleAndRender);
+    const assembleBtn = byId('assemble');
+    assembleBtn.addEventListener('click', ()=>assembleAndRender(true));
     byId('validate').addEventListener('click', ()=>{
-      const cfg=getConfig(); const val=validateCfg(cfg); renderValidation(val); renderJSON(cfg);
+      const cfg=getConfig(); const prompt=assemblePrompt(cfg); const val=validateCfg(cfg,prompt); renderValidation(val); renderJSON(cfg);
       l('validate', {ok:val.ok, errors:val.errors.length, warnings:val.warnings.length});
     });
+    byId('liveAssemble').addEventListener('change', e=>{
+      const live = e.target.checked;
+      ['form','domainSel','patternSel','role','roleSel','task','taskSel','inputs','constraints','verificationFree','nextFree','audienceFree','styleSel','toneSel','formatSel','verifySel','nextSel','safetySel','localeSel','readSel','len','seed','brandSel']
+        .forEach(id=> byId(id)?.removeEventListener('input', assembleAndRender));
+      if(live){
+        ['form','domainSel','patternSel','role','roleSel','task','taskSel','inputs','constraints','verificationFree','nextFree','audienceFree','styleSel','toneSel','formatSel','verifySel','nextSel','safetySel','localeSel','readSel','len','seed','brandSel']
+          .forEach(id=> byId(id)?.addEventListener('input', ()=>assembleAndRender(false)));
+      }
+    });
 
-    byId('copyPrompt').addEventListener('click', async ()=>{
-      try{ await navigator.clipboard.writeText(promptOut.value||''); l('copyPrompt'); }catch{}
-    });
-    byId('copyJSON').addEventListener('click', async ()=>{
-      try{ await navigator.clipboard.writeText(jsonOut.textContent||''); l('copyJSON'); }catch{}
-    });
+    // Copy buttons
+    byId('copyPrompt').addEventListener('click', ()=>copy(promptOut.value));
+    byId('copyJSON').addEventListener('click', ()=>copy(jsonOut.textContent));
     byId('downloadJSON').addEventListener('click', ()=>{
-      const blob = new Blob([jsonOut.textContent], {type:'application/json'});
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt_config.json'; a.click();
-      l('downloadJSON');
+      const blob = new Blob([jsonOut.textContent], {type:'application/json'}); const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download='prompt_config.json'; a.click();
     });
+    byId('exportMD').addEventListener('click', ()=>{
+      const md = `# Prompt\\n\\n\`\`\`text\\n${promptOut.value}\\n\`\`\`\\n`;
+      const blob = new Blob([md], {type:'text/markdown'}); const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download='prompt.md'; a.click();
+    });
+    byId('copySystemUser').addEventListener('click', ()=>{
+      const cfg=getConfig(); const sys=cfg.systemBlock?getSystemBlock(cfg):"";
+      const out = (cfg.systemBlock?`[SYSTEM]\\n${sys}\\n\\n`:"") + `[USER]\\n${promptOut.value}`;
+      copy(out);
+    });
+    const copyOpenAIFn = ()=>copy(byId('openaiOut').textContent);
+    const copyAnthropicFn = ()=>copy(byId('anthropicOut').textContent);
+    byId('copyOpenAI').addEventListener('click', copyOpenAIFn);
+    byId('copyAnthropic').addEventListener('click', copyAnthropicFn);
+
     byId('shareURL').addEventListener('click', ()=>{
       const cfg = getConfig();
       const s = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))));
       const url = location.origin + location.pathname + '#cfg=' + s;
-      navigator.clipboard.writeText(url).catch(()=>{});
+      copy(url); alert('Sharable URL copied to clipboard.');
       l('shareURL');
-      alert('Sharable URL copied to clipboard.');
     });
     byId('importJSON').addEventListener('change', async (e)=>{
       const f=e.target.files?.[0]; if(!f) return;
       const txt=await f.text(); try{ const j=JSON.parse(txt); applyConfig(j.config || j); assembleAndRender(); }catch(ex){ alert('Invalid JSON'); }
     });
+    byId('importClipboard').addEventListener('click', async ()=>{
+      try{ const txt = await navigator.clipboard.readText(); const j=JSON.parse(txt); applyConfig(j.config || j); assembleAndRender(); }catch{ alert('Clipboard did not contain valid JSON'); }
+    });
     byId('reset').addEventListener('click', ()=> location.reload());
 
-    // ---------- Load from URL hash ----------
+    // ---------- Load from URL hash / persistence ----------
     function loadHash(){
       const h = location.hash.slice(1);
       const m = /^cfg=(.+)$/.exec(h);
@@ -633,7 +907,7 @@ Notes:
       }catch{ /* ignore */ }
     }
     function applyConfig(cfg){
-      const setSel=(id,val)=>{ const el=byId(id); if(!el) return; Array.from(el.options).forEach(o=>o.selected = (el.multiple ? (val||[]).includes(o.value) : o.value===val)); if(!el.multiple) el.value = val||el.value; el.dispatchEvent(new Event('change')); };
+      const setSel=(id,val)=>{ const el=byId(id); if(!el) return; if(el.multiple){ Array.from(el.options).forEach(o=>o.selected = (val||[]).includes(o.value)); } else { el.value = val??el.value; } el.dispatchEvent(new Event('change')); };
       setSel('domainSel', cfg.domain);
       setSel('patternSel', [cfg.pattern]);
       byId('role').value = cfg.role||'';
@@ -643,39 +917,51 @@ Notes:
       setSel('styleSel', cfg.style);
       setSel('toneSel', cfg.tone);
       setSel('audSel', [cfg.audience]);
+      byId('audienceFree').value = cfg.audience||'';
       setSel('formatSel', cfg.outputFormat);
-      setSel('verifySel', [cfg.verification]);
-      setSel('nextSel', [cfg.nextAction]);
+      byId('verificationFree').value = cfg.verification||'';
+      byId('nextFree').value = cfg.nextAction||'';
       setSel('safetySel', cfg.safetyLevel);
       setSel('localeSel', cfg.locale);
       setSel('readSel', cfg.readingLevel);
       byId('len').value = cfg.lengthLimit||1200;
       byId('seed').value = cfg.seed||1337;
       byId('brandSel').value = String(!!cfg.branding);
+      byId('refs').value = (cfg.references||[]).join(', ');
+      if('systemBlock' in cfg) byId('sysOpt').value = cfg.systemBlock ? "Yes":"No";
+      if('systemStyle' in cfg) byId('sysStyle').value = cfg.systemStyle;
     }
     byId('loadHash').addEventListener('click', loadHash);
-    window.addEventListener('DOMContentLoaded', loadHash);
+    window.addEventListener('DOMContentLoaded', ()=>{
+      // persistence
+      try{
+        const s = localStorage.getItem('magic_last_cfg'); if(s){ applyConfig(JSON.parse(s)); }
+      }catch{}
+      loadHash();
+      assembleAndRender();
+    });
 
-    // ---------- Logs export/purge ----------
+    // Logs export/purge
     byId('exportLogs').addEventListener('click', ()=>{
       const blob = new Blob([logEl.textContent], {type:'text/plain'});
       const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='logs.jsonl'; a.click();
     });
     byId('purgeLogs').addEventListener('click', ()=>{ logEl.textContent=''; l('logs.purge'); });
 
-    // ---------- Library Modal ----------
-    const modal = byId('libraryModal'), listbox = byId('listbox'), libSearch = byId('libSearch'), tabsEl = byId('tabs'), tabTitle = byId('tabTitle');
+    // ---------- Library ----------
+    const libraryModal = byId('libraryModal'), listbox = byId('listbox'), libSearch = byId('libSearch'), tabsEl = byId('tabs'), tabTitle = byId('tabTitle');
     const LIB_TABS = [
-      {id:'roles',label:'Roles',data:ROLES},
-      {id:'tasks',label:'Tasks',data:[...new Set(Object.values(TASK_TEMPLATES).flat())]},
-      {id:'inputs',label:'Inputs',data:INPUTS},
-      {id:'constraints',label:'Constraints',data:CONSTRAINTS},
-      {id:'verify',label:'Verification',data:VERIFY},
-      {id:'next',label:'Next Actions',data:NEXT}
+      {id:'roles',label:'Roles',data:()=>ROLES},
+      {id:'tasks',label:'Tasks',data:()=>[...new Set(Object.values(TASK_TEMPLATES).flat())]},
+      {id:'inputs',label:'Inputs',data:()=>INPUTS},
+      {id:'constraints',label:'Constraints',data:()=>CONSTRAINTS},
+      {id:'verify',label:'Verification',data:()=>VERIFY},
+      {id:'next',label:'Next Actions',data:()=>NEXT}
     ];
     let activeTab = 'roles';
-    function openLib(){ modal.classList.add('open'); renderTabs(); renderList(); libSearch.value=''; }
-    function closeLib(){ modal.classList.remove('open'); }
+    const customs = {roles:[],tasks:[],inputs:[],constraints:[],verify:[],next:[]};
+    function openLib(){ libraryModal.classList.add('open'); renderTabs(); renderList(); libSearch.value=''; }
+    function closeLib(){ libraryModal.classList.remove('open'); }
     byId('openLibrary').onclick=openLib; byId('libClose').onclick=closeLib;
 
     function renderTabs(){
@@ -689,16 +975,24 @@ Notes:
     }
     function renderList(){
       listbox.innerHTML='';
-      const data = LIB_TABS.find(t=>t.id===activeTab).data;
+      const base = LIB_TABS.find(t=>t.id===activeTab).data();
+      const showC = byId('showCustoms').checked;
+      const data = showC ? base.concat(customs[activeTab]||[]) : base;
       tabTitle.textContent = `${LIB_TABS.find(t=>t.id===activeTab).label} — ${data.length} options`;
       const q = libSearch.value.trim().toLowerCase();
       data.filter(v=>!q || v.toLowerCase().includes(q)).forEach(v=>{
         const d=document.createElement('label'); d.className='lb-item text-slate-300';
-        d.innerHTML = `<input type="checkbox" class="mr-2"> <span>${v}</span>`;
+        d.innerHTML = `<input type="checkbox" class="mr-2"> <span>${esc(v)}</span>`;
         listbox.appendChild(d);
       });
     }
     libSearch.addEventListener('input', renderList);
+    byId('showCustoms').addEventListener('change', renderList);
+    byId('libAdd').onclick=()=>{
+      const val = (byId('libCustom').value||'').trim(); if(!val) return;
+      customs[activeTab].push(val); byId('libCustom').value=''; renderList();
+      if(byId('persist').checked){ try{ localStorage.setItem('magic_customs', JSON.stringify(customs)); }catch{} }
+    };
     byId('libInsert').onclick=()=>{
       const target = byId('libTarget').value;
       const picks = Array.from(listbox.querySelectorAll('input:checked')).map(c=>c.nextElementSibling.textContent);
@@ -708,13 +1002,188 @@ Notes:
       const addition = picks.map(x=> activeTab==='constraints' || activeTab==='inputs' ? `- ${x}` : x).join(isTextArea?'\n':', ');
       field.value = field.value ? (isTextArea? field.value+'\n'+addition : field.value+', '+addition) : addition;
       closeLib();
+      assembleAndRender();
     };
 
-    // ---------- PWA-lite Service Worker ----------
+    // restore customs
+    try{
+      const saved = localStorage.getItem('magic_customs'); if(saved){ const j=JSON.parse(saved); Object.assign(customs, j||{}); }
+    }catch{}
+
+    // ---------- Templates (24) ----------
+    const templatesModal = byId('templatesModal'), templatesList = byId('templatesList'), templatePreview = byId('templatePreview');
+    const TEMPLATES = (()=>{
+      // Minimal 24 configs (domain → cfg), values align with spec
+      const base = (o)=>JSON.parse(JSON.stringify(o));
+      const t = [];
+      const push=(name, cfg)=> t.push({name, cfg});
+      push("Writing • Explainer",{role:"Senior Editor",task:"Write a 600-word explainer on caching for designers",constraints:"- 3 sources, no jargon",style:"Modern/Minimalist",tone:"Neutral",outputFormat:"Markdown",verification:"List sources with links",domain:"Writing",pattern:"Generator",audience:"Designers",lengthLimit:1200,safetyLevel:"General",locale:"en-US",readingLevel:"Adult-General",seed:1337});
+      push("Coding • Refactor + Tests",{role:"Refactoring Engineer",task:"Refactor the given JS module and add Jest tests",inputs:"<code>",constraints:"- No external deps\n- Include edge cases",style:"Formal/Concise",tone:"Direct",outputFormat:"Code",domain:"Coding",pattern:"Refactorer",audience:"Developers (Senior)",lengthLimit:1500,safetyLevel:"General"});
+      push("Data Analysis • Profile",{role:"Data Analyst",task:"Profile CSV with columns user_id, spend",constraints:"- Flag anomalies\n- Chart plan only",outputFormat:"Markdown",domain:"Data Analysis",pattern:"DataFrame Analyst"});
+      push("Math • Optimization",{role:"Problem Solver",task:"Solve this optimization problem",constraints:"- Show assumptions; concise steps",outputFormat:"Markdown",domain:"Math/Reasoning",pattern:"Explainer"});
+      push("Tutoring • Fractions",{role:"Tutor",task:"Teach fractions to 5th graders",constraints:"- 3 examples + 2 exercises",audience:"Students",outputFormat:"Markdown",domain:"Education/Tutoring",pattern:"Lesson Planner"});
+      push("Research • 3 Papers",{role:"Research Summarizer",task:"Summarize 3 papers on vector databases",constraints:"- APA inline; 2 limitations each",verification:"Provide links or DOIs",outputFormat:"Markdown",domain:"Research & Citations",pattern:"Summarizer"});
+      push("Localization • EN→ES",{role:"Localization Specialist",task:"Translate EN→ES",constraints:"- Formal register; list idioms",outputFormat:"Markdown",domain:"Translation/Localization",pattern:"Translator"});
+      push("Creative • Taglines",{role:"Copy Generator",task:"Create 10 taglines for a cyberpunk productivity app",constraints:"- ≤60 chars; no clichés",outputFormat:"Markdown",domain:"Creative Ideation",pattern:"Generator"});
+      push("Marketing • Email Seq",{role:"Marketing Strategist",task:"Email sequence for SMB founders",constraints:"- One CTA; track CTR",outputFormat:"Markdown",domain:"Marketing",pattern:"Planner"});
+      push("Sales • Outreach x3",{role:"Sales Writer",task:"3 outreach variants to CTOs",constraints:"- Respectful opt-out; ≤100 words",outputFormat:"Markdown",domain:"Sales/Prospecting",pattern:"Generator"});
+      push("UX • Heuristic Review",{role:"UX Reviewer",task:"Heuristic review of signup flow",inputs:"Screenshots/notes",constraints:"- A11y issues + fixes",outputFormat:"Markdown",domain:"Product/UX",pattern:"UX Reviewer"});
+      push("PM • Milestones",{role:"Project Planner",task:"Decompose project into milestones",constraints:"- Owners; DOR/DoD",outputFormat:"Markdown",domain:"Project Management",pattern:"Planner"});
+      push("Ops • On-call SOP",{role:"SOP Designer",task:"On-call SOP",constraints:"- Alert thresholds; escalation matrix",outputFormat:"Markdown",domain:"Operations/Process",pattern:"Planner"});
+      push("Support • Troubleshoot",{role:"Support Guide",task:"Troubleshoot login issue",constraints:"- If unsafe → escalate; log steps",outputFormat:"Markdown",domain:"Customer Support",pattern:"Explainer"});
+      push("DevOps • IaC Plan",{role:"DevOps Planner",task:"Deploy app on Cloud X via IaC",constraints:"- Cost note; rollback plan",outputFormat:"Markdown",domain:"DevOps/Cloud",pattern:"Planner"});
+      push("Data Eng • ETL",{role:"Data Engineer",task:"ETL plan for event dataset",constraints:"- Schema + lineage; backfill checks",outputFormat:"Markdown",domain:"Data Engineering",pattern:"Planner"});
+      push("Legal • TOS Summary",{role:"Policy Analyst",task:"Summarize TOS differences",constraints:"- Not legal advice",outputFormat:"Markdown",domain:"Legal (non-advisory)",pattern:"Policy Drafter",safetyLevel:"Sensitive-Legal"});
+      push("Medical • Overview",{role:"Health Explainer",task:"Overview of diabetes for lay audience",constraints:"- Not medical advice; sources",outputFormat:"Markdown",domain:"Medical/Health (non-diagnostic)",pattern:"Explainer",safetyLevel:"Sensitive-Medical"});
+      push("Financial • ETF Fees",{role:"Finance Explainer",task:"Explain ETF fees to beginners",constraints:"- Not financial advice; risks",outputFormat:"Markdown",domain:"Financial (non-advisory)",pattern:"Explainer",safetyLevel:"Sensitive-Financial"});
+      push("Career • Resume Bullets",{role:"Career Coach",task:"Improve resume bullets",inputs:"Resume text",constraints:"- STAR format; bias-aware",outputFormat:"Markdown",domain:"Career/HR",pattern:"Coach"});
+      push("Interview • Mock",{role:"Interview Coach",task:"Mock interview for backend engineer",constraints:"- 5 questions; feedback rubric",outputFormat:"Markdown",domain:"Resume/Interview",pattern:"Coach"});
+      push("Travel • 3 Days",{role:"Travel Planner",task:"3-day itinerary in Tokyo",constraints:"- Public transit; accessibility notes",outputFormat:"Markdown",domain:"Planning/Travel",pattern:"Planner"});
+      push("Productivity • Deep Work",{role:"Productivity Coach",task:"Time-boxed deep work plan",constraints:"- 2 experiments; reflect end",outputFormat:"Markdown",domain:"Personal Productivity",pattern:"Coach"});
+      push("Custom • Router",{role:"General Assistant",task:"<custom>",constraints:"- Be explicit; measurable outcome",outputFormat:"Markdown",domain:"Misc/Custom",pattern:"Router"});
+      return t;
+    })();
+    function openTemplates(){ templatesModal.classList.add('open'); renderTemplates(); }
+    function closeTemplates(){ templatesModal.classList.remove('open'); }
+    function renderTemplates(){
+      templatesList.innerHTML='';
+      TEMPLATES.forEach((t,i)=>{
+        const b=document.createElement('button'); b.className='lb-item text-left hover:border-slate-500'; b.innerHTML = `<div class="font-medium">${esc(t.name)}</div><div class="text-[11px] text-slate-400">${esc(t.cfg.domain)} • ${esc(t.cfg.pattern||'Router')}</div>`;
+        b.onclick=()=>{ templatePreview.textContent = JSON.stringify(t.cfg, null, 2); applyConfig(t.cfg); assembleAndRender(); };
+        templatesList.appendChild(b);
+      });
+    }
+    byId('openTemplates').onclick=openTemplates; byId('templatesClose').onclick=closeTemplates;
+
+    // ---------- Workflows (5) ----------
+    const workflowsModal = byId('workflowsModal'), workflowsList = byId('workflowsList'), workflowOut = byId('workflowOut');
+    const WORKFLOWS = [
+      {name:"Research → Draft → Critique → Revise → Finalize", chain:["Summarizer","Generator","Critic","Generator","Planner"]},
+      {name:"Spec → Code → Tests → Review → Optimize", chain:["Planner","Generator","Test-Writer","Critic","Refactorer"]},
+      {name:"Market Study → Messaging → Email Sequence → A/B Plan", chain:["Summarizer","Generator","Generator","Experiment Designer"]},
+      {name:"Policy Draft → Risk Review → Comms Plan", chain:["Policy Drafter","Risk Assessor","Planner"]},
+      {name:"Lesson Plan → Exercises → Assessment Rubric", chain:["Lesson Planner","Generator","Planner"]}
+    ];
+    function openWorkflows(){ workflowsModal.classList.add('open'); renderWorkflows(); }
+    function closeWorkflows(){ workflowsModal.classList.remove('open'); }
+    function renderWorkflows(){
+      workflowsList.innerHTML='';
+      WORKFLOWS.forEach((wf,i)=>{
+        const b=document.createElement('button'); b.className='lb-item text-left hover:border-slate-500'; b.innerHTML = `<div class="font-medium">${esc(wf.name)}</div><div class="text-[11px] text-slate-400">${esc(wf.chain.join(' → '))}</div>`;
+        b.onclick=()=>{
+          const cfg=getConfig(); const basePrompt=assemblePrompt(cfg);
+          const steps = wf.chain.map((p,idx)=>`STEP ${idx+1} — ${p}\n\n${basePrompt.replace(/(^PATTERN: ).*/m, '$1'+p)}`).join('\n\n---\n\n');
+          workflowOut.value = steps;
+        };
+        workflowsList.appendChild(b);
+      });
+    }
+    byId('openWorkflows').onclick=openWorkflows; byId('workflowsClose').onclick=closeWorkflows;
+    byId('copyWorkflow').onclick=()=>copy(workflowOut.value);
+    byId('useWorkflow').onclick=()=>{ promptOut.value = workflowOut.value; };
+
+    // ---------- Improve ----------
+    const improveModal = byId('improveModal');
+    function openImprove(){ improveModal.classList.add('open'); byId('improveSrc').value = promptOut.value||''; byId('improveOut').textContent=''; }
+    function closeImprove(){ improveModal.classList.remove('open'); }
+    byId('openImprove').onclick=openImprove; byId('improveClose').onclick=closeImprove;
+    byId('runImprove').onclick=()=>{
+      const src = byId('improveSrc').value||'';
+      const sug = [];
+      if(!/OUTPUT FORMAT:/i.test(src)) sug.push("- Add 'OUTPUT FORMAT' section for clarity.");
+      if(/JSON/i.test(src) && !/strict|valid JSON/i.test(src)) sug.push("- JSON requested, add 'Return strictly valid JSON' and a schema/example.");
+      if(/Code/i.test(src) && !/```|fence/i.test(src)) sug.push("- Code requested, instruct to use fenced code blocks and specify language.");
+      if(!/AUDIENCE:/i.test(src)) sug.push("- Missing AUDIENCE; add who it's for.");
+      if(!/DISCLAIMER:/i.test(src) && /(Legal|Medical|Financial)/i.test(src)) sug.push("- Sensitive domain; add non-advisory disclaimer.");
+      if(src.length>1100) sug.push("- Prompt is long; trim redundancy or raise lengthLimit.");
+      byId('improveOut').textContent = sug.length? sug.join('\n') : "Looks solid. No critical issues detected.";
+    };
+    byId('applyImprove').onclick=()=>{
+      const add = byId('improveOut').textContent||'';
+      if(!add || add.startsWith("Looks solid")) return;
+      // Naive apply: append suggestions as constraints so the user can act
+      byId('constraints').value = (byId('constraints').value? byId('constraints').value+'\n' : '') + add.split('\n').map(s=>s.replace(/^- /,'- ')).join('\n');
+      closeImprove(); assembleAndRender();
+    };
+
+    // ---------- Back-translate ----------
+    const backModal = byId('backModal');
+    function openBack(){ backModal.classList.add('open'); byId('backOut').textContent=''; }
+    function closeBack(){ backModal.classList.remove('open'); }
+    byId('openBack').onclick=openBack; byId('backClose').onclick=closeBack;
+    byId('runBack').onclick=()=>{
+      const out = byId('backIn').value||'';
+      const rec=[];
+      if(/sorry|cannot|can't|won't|policy/i.test(out)) rec.push("Issue: Refusal detected → Add clarifying constraints and confirm safe, educational intent.");
+      if(/sources?/i.test(out) && !/http/i.test(out)) rec.push("Issue: Mentions sources without links → Add 'List sources with links' to verification.");
+      if(/\bapprox(imate|imation)?\b|\bmaybe\b/i.test(out)) rec.push("Issue: Uncertain output → Add acceptance checks or require assumptions list.");
+      if(out.length<200) rec.push("Issue: Output short → Specify desired length or structure.");
+      byId('backOut').textContent = (rec.length? "Recommendations:\n- "+rec.join('\n- ') : "No obvious issues found.");
+    };
+    byId('applyBack').onclick=()=>{
+      const r = byId('backOut').textContent||'';
+      if(!r.startsWith("Recommendations:")) return;
+      byId('constraints').value = (byId('constraints').value? byId('constraints').value+'\n' : '') + r.split('\n').slice(1).map(s=>s.replace(/^- /,'- ')).join('\n');
+      closeBack(); assembleAndRender();
+    };
+
+    // ---------- API Payloads ----------
+    const apiModal = byId('apiModal');
+    byId('openAPI').onclick=()=>{ apiModal.classList.add('open'); renderJSON(getConfig()); };
+    byId('apiClose').onclick=()=> apiModal.classList.remove('open');
+    byId('copyOpenAI2').onclick=copyOpenAIFn; byId('copyAnthropic2').onclick=copyAnthropicFn;
+
+    // ---------- Golden Tests ----------
+    byId('runTests').onclick=()=>{
+      const msgs=[];
+      let pass=0, total=0;
+      TEMPLATES.forEach(t=>{
+        const cfg = Object.assign({lengthLimit:1200, safetyLevel: t.cfg.safetyLevel||"General", locale:"en-US", readingLevel:"Adult-General", seed:1337}, t.cfg);
+        const p = assemblePrompt(cfg); const v = validateCfg(cfg,p);
+        total++;
+        const needDisc = ["Sensitive-Legal","Sensitive-Medical","Sensitive-Financial"].includes(cfg.safetyLevel);
+        const hasDisc = /DISCLAIMER:/i.test(p);
+        const ok = v.errors.length===0 && (!needDisc || hasDisc);
+        if(ok) pass++;
+        msgs.push({name:t.name, ok, errors:v.errors, warnings:v.warnings, disclaimer:hasDisc});
+      });
+      byId('testOut').textContent = JSON.stringify({pass, total, results:msgs}, null, 2);
+    };
+
+    // ---------- UI: nav, toggles, RTL, i18n ----------
+    document.querySelectorAll('[data-nav]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const target = btn.getAttribute('data-nav');
+        $('#screen-quick').classList.toggle('hidden', target!=='quick');
+        $('#screen-advanced').classList.toggle('hidden', target!=='advanced');
+      });
+    });
+    byId('rtlToggle').addEventListener('change', e=>{
+      document.documentElement.dir = e.target.checked ? 'rtl' : 'ltr';
+    });
+    byId('uiLang').addEventListener('change', e=>{
+      const lang = e.target.value;
+      // minimal i18n swap for key labels (demo only)
+      const dict = {
+        es:{
+          "1) Build":"1) Construir","2) Review & Export":"2) Revisar y Exportar",
+          "Assemble Prompt":"Ensamblar Prompt","Validate":"Validar","Copy Prompt":"Copiar Prompt",
+          "Download .md":"Descargar .md","Library":"Biblioteca","Templates":"Plantillas",
+          "Workflows":"Flujos","Improve":"Mejorar","Back-translate":"Retrotraducción",
+          "API Payloads":"Cargas de API"
+        }
+      }[lang]||{};
+      document.querySelectorAll('button, h2, summary, p, span, label').forEach(el=>{
+        const t = el.textContent.trim();
+        if(dict[t]) el.textContent = dict[t];
+      });
+    });
+
+    // ---------- Service Worker (offline) ----------
     (async function registerSW(){
       if(!('serviceWorker' in navigator)) { byId('status').textContent='No SW'; return; }
       const swCode = `
-        const CACHE='magic-v2';
+        const CACHE='magic-v3';
         self.addEventListener('install', e=>{ e.waitUntil((async()=>{ const c=await caches.open(CACHE); await c.addAll(['./']); self.skipWaiting(); })()); });
         self.addEventListener('activate', e=> e.waitUntil(self.clients.claim()));
         self.addEventListener('fetch', e=>{ e.respondWith((async()=>{ const c=await caches.open(CACHE); const r=await c.match(e.request); return r || fetch(e.request).then(res=>{ if(e.request.method==='GET' && res.ok) c.put(e.request,res.clone()); return res; }); })()); });
@@ -726,13 +1195,14 @@ Notes:
       }catch{ byId('status').textContent='SW error'; }
     })();
 
-    // ---------- Init ----------
-    // Prefill sensible defaults aligned with original prototype
+    // ---------- Screen init ----------
+    // Prefill defaults
     byId('domainSel').value = "Misc/Custom"; byId('domainSel').dispatchEvent(new Event('change'));
     byId('styleSel').value = "Neon/Futuristic";
     byId('formatSel').value = "Markdown";
     byId('safetySel').value = "General";
-    l('app.start',{ua:navigator.userAgent});
+    assembleAndRender();
+
   })();
   </script>
 </body>
