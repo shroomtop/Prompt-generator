@@ -1,433 +1,739 @@
 <!DOCTYPE html>
-<html lang="en">
+<!--
+Magic — Ultimate Universal Prompt Generator (Single-File, Offline, Secure)
+Author: Shroomtop420® (Alex)  •  License: MIT
+Version: 2.0.0 • Build: 2025-08-28
+Source basis: user's Magic prototype (enhanced end-to-end)
+Notes:
+- Single HTML file, mobile-first, Tailwind CDN, strict CSP, no external images.
+- PWA-lite SW for offline caching. No secrets, no telemetry by default.
+- Implements canonical slot schema + pattern library + deterministic assembly + validators.
+- Every text field has a paired dropdown (quick-pick). Global Library modal adds bulk options.
+-->
+<html lang="en" class="bg-black text-white">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Standalone App Prompt Generator</title>
-    <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --container-bg: rgba(255, 255, 255, 0.6);
-            --container-border: rgba(255, 255, 255, 0.2);
-            --text-color: #333;
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --code-bg: #e9ecef;
-            --border-radius: 8px;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --padding: 1.5rem;
-            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>Magic — Ultimate Prompt Generator • Shroomtop420®</title>
+  <meta name="description" content="Turn any intent into a validated, safe, high-quality ChatGPT prompt. Single-file, offline, secure-by-default."/>
+  <meta name="theme-color" content="#0b0c10"/>
+  <!-- Strict CSP (nonce must match inline <script> tags); Tailwind CDN allowed -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'none';
+    script-src 'nonce-s420nonce' https://cdn.tailwindcss.com;
+    style-src 'unsafe-inline';
+    img-src 'self' data:;
+    connect-src 'self';
+    font-src 'none';
+    media-src 'none';
+    object-src 'none';
+    base-uri 'none';
+    frame-ancestors 'none';
+    form-action 'self';
+    manifest-src 'self' data:;
+  ">
+  <!-- Favicon (inline SVG) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f1220'/%3E%3Cpath d='M10 42c4 6 12 10 22 10 10 0 18-4 22-10-3-8-11-14-22-14S13 34 10 42z' fill='%2316f5b4'/%3E%3Ccircle cx='32' cy='28' r='6' fill='%23a78bfa'/%3E%3C/svg%3E"/>
+  <!-- Manifest (inline data:) -->
+  <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;Magic Prompt Generator&quot;,&quot;short_name&quot;:&quot;Magic&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230b0c10&quot;,&quot;theme_color&quot;:&quot;%230b0c10&quot;,&quot;icons&quot;:[]}"/>
 
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-color);
-            background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
-            background-attachment: fixed;
-            margin: 0;
-            padding: var(--padding);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Align to top */
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+  <!-- Tailwind CDN -->
+  <script nonce="s420nonce" src="https://cdn.tailwindcss.com"></script>
 
-        .container {
-            background: var(--container-bg);
-            backdrop-filter: blur(10px) saturate(180%);
-            -webkit-backdrop-filter: blur(10px) saturate(180%);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--container-border);
-            box-shadow: var(--shadow);
-            padding: var(--padding);
-            max-width: 900px;
-            width: 100%;
-            margin-top: 20px; /* Add some top margin */
-        }
-
-        h1, h2 {
-            color: var(--primary-color);
-            margin-top: 0;
-            border-bottom: 1px solid var(--primary-color);
-            padding-bottom: 0.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-
-        select, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: var(--border-radius);
-            border: 1px solid #ccc;
-            margin-bottom: 1rem;
-            font-family: inherit;
-            font-size: 1rem;
-            box-sizing: border-box; /* Include padding in width */
-        }
-
-        select {
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right .7em top 50%;
-            background-size: .65em auto;
-            cursor: pointer;
-        }
-
-        textarea {
-            height: 250px;
-            font-family: 'Courier New', Courier, monospace;
-            background-color: var(--code-bg);
-            resize: vertical;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            margin-top: 0.5rem;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .details {
-            background-color: rgba(233, 236, 239, 0.7); /* Slightly different bg for details */
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .details h3 {
-            margin-top: 0;
-            color: var(--secondary-color);
-            font-size: 1.1rem;
-        }
-
-        .details ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-
-        .details li {
-            margin-bottom: 0.3rem;
-        }
-
-        .instructions {
-            font-size: 0.9rem;
-            color: var(--secondary-color);
-            margin-bottom: 1rem;
-        }
-        
-        #copy-status {
-            display: inline-block;
-            margin-left: 10px;
-            color: green;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-    </style>
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#151822; --line:#23283a; --accent:#16f5b4; --accent2:#a78bfa;
+    }
+    html,body{height:100%;}
+    body{background:
+      radial-gradient(1200px 600px at 10% -10%, #0f1220 30%, #0b0c10 60%) no-repeat, #0b0c10;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    }
+    .glass{ background: rgba(36,39,47,0.68); border-radius:1.2rem; box-shadow: 0 12px 48px #0006; border: 1px solid #21222d66;}
+    ::selection{ background:#16f5b4cc; color:#0b0c10;}
+    .code{ font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    .hr{ height:1px; background:linear-gradient(90deg,transparent,#2d3247,transparent); }
+    .btn{ border:1px solid #2a2f43; }
+    .btn:hover{ border-color:#3b4160; }
+    .select{ background:#0f1220; border:1px solid #2a2f43; border-radius:.75rem; padding:.55rem; }
+    .input{ background:#0f1220; border:1px solid #2a2f43; border-radius:.75rem; padding:.55rem .75rem; }
+    .chip{ display:inline-flex; align-items:center; gap:.5rem; border:1px solid #2a2f43; border-radius:999px; padding:.15rem .6rem; margin:.15rem; background:#0f1220; }
+    .modal{ position:fixed; inset:0; display:none; background:#000a; z-index:50; }
+    .modal.open{ display:block; }
+    .panel{ position:absolute; inset:0; display:grid; grid-template-columns:280px 1fr; }
+    .tabbtn{ display:flex; align-items:center; gap:.5rem; width:100%; text-align:left; padding:.6rem .8rem; border-left:3px solid transparent; border-bottom:1px solid #1e2232; }
+    .tabbtn.active{ border-left-color:#16f5b4; background:#0f1220; }
+    .listbox{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.5rem; align-content:start; }
+    .lb-item{ border:1px solid #2a2f43; border-radius:.75rem; background:#0f1220; padding:.5rem; }
+    .ok{ color:#16f5b4; }
+    .warn{ color:#fbbf24; }
+    .err{ color:#f87171; }
+  </style>
 </head>
-<body>
-
-    <div class="container">
-        <h1>Standalone App Prompt Generator</h1>
-        <p class="instructions">Select one of the app ideas below. The details will appear, along with a tailored prompt you can copy and provide to ChatGPT (or a similar AI) to generate the application as a single, self-contained HTML file.</p>
-
-        <label for="app-selector">Select App Idea:</label>
-        <select id="app-selector">
-            <option value="">-- Select an App --</option>
-            </select>
-
-        <div id="app-details" class="details" style="display: none;">
-            <h2 id="details-title"></h2>
-            <h3>Main Purpose:</h3>
-            <p id="details-purpose"></p>
-            <h3>Key Features:</h3>
-            <ul id="details-features"></ul>
-            <h3>Primary Libraries:</h3>
-            <p id="details-libraries"></p>
+<body class="min-h-screen">
+  <header class="max-w-6xl mx-auto px-4 pt-8">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <svg aria-hidden="true" width="32" height="32" viewBox="0 0 64 64" class="drop-shadow">
+          <rect width="64" height="64" rx="14" fill="#0f1220" stroke="#1f2333" />
+          <path d="M10 42c4 6 12 10 22 10 10 0 18-4 22-10-3-8-11-14-22-14S13 34 10 42z" fill="#16f5b4"/>
+          <circle cx="32" cy="28" r="6" fill="#a78bfa"/>
+        </svg>
+        <div>
+          <p class="text-xs tracking-wider text-slate-400 uppercase">Shroomtop420®</p>
+          <h1 class="text-2xl md:text-3xl font-bold">Magic — Ultimate Prompt Generator</h1>
+          <p class="text-slate-300 text-sm">Pick, don’t type. Every slot has quick-picks + library. Deterministic assembly + safety validators.</p>
         </div>
-
-        <div id="prompt-area" style="display: none;">
-            <label for="generated-prompt">Generated ChatGPT Prompt:</label>
-            <textarea id="generated-prompt" readonly></textarea>
-            <button id="copy-button">Copy Prompt</button>
-            <span id="copy-status">Copied!</span>
-        </div>
+      </div>
+      <div class="text-right">
+        <p id="status" class="text-xs text-slate-400">Initializing…</p>
+        <p class="text-[10px] text-slate-500 code">v2.0.0 • Single-file • Offline</p>
+      </div>
     </div>
+  </header>
 
-    <script>
-        const appIdeas = [
-            // --- I. Data Visualization Dashboards ---
-            { id: 1, category: "Data Visualization Dashboards", title: "Live CSV Dashboard Builder", purpose: "Upload CSV data and interactively build a dashboard with multiple linked charts (bar, line, pie, scatter).", features: ["CSV upload (PapaParse)", "Column selection for axes/values", "Chart type selection per panel", "Dynamic filtering controls (sliders, dropdowns)", "Dashboard layout persistence (LocalStorage)", "Chart image export", "Glassmorphism UI panels"], libraries: "Chart.js, PapaParse" },
-            { id: 2, category: "Data Visualization Dashboards", title: "KPI Tracker & Forecaster", purpose: "Manually input or load key performance indicators over time and visualize trends with simple forecasting.", features: ["Data entry form", "CSV import/export", "Multiple KPI tracking", "Line/area charts showing trends", "Basic linear regression forecasting visualization", "Threshold alerting visuals", "Customizable timeframes", "LocalStorage persistence"], libraries: "Chart.js, PapaParse (optional)" },
-            { id: 3, category: "Data Visualization Dashboards", title: "Interactive Geo Heatmap (Simplified)", purpose: "Visualize intensity data across predefined regions (e.g., US states, world continents) using SVG or D3.js.", features: ["Data input (manual or CSV mapping)", "Color scale customization", "Interactive tooltips", "SVG-based map rendering", "Data range filtering", "Export map as SVG/PNG"], libraries: "D3.js (preferred), PapaParse" },
-            { id: 4, category: "Data Visualization Dashboards", title: "Multi-Dataset Correlation Matrix", purpose: "Upload multiple CSVs and visualize correlations between selected numerical columns.", features: ["Multiple file uploads", "Column selection UI", "Correlation calculation", "Heatmap visualization", "Interactive cell highlighting", "Data filtering"], libraries: "Chart.js (for heatmap), PapaParse" },
-            { id: 5, category: "Data Visualization Dashboards", title: "Real-time Sensor Data Simulator & Visualizer", purpose: "Simulate streaming data and display it on live-updating charts.", features: ["Configurable data simulation", "Multiple live line charts", "Buffer size controls", "Pause/resume simulation", "Data point inspection", "Visual alerts"], libraries: "Chart.js" },
-            { id: 6, category: "Data Visualization Dashboards", title: "Dynamic Pivot Table & Chart Generator", purpose: "Load tabular data (CSV) and create pivot table summaries and corresponding charts.", features: ["CSV upload", "Drag-and-drop field selection", "Aggregation functions", "Interactive pivot table", "Automated chart generation", "Export table/chart"], libraries: "PapaParse, Chart.js, Custom JS logic" },
-            { id: 7, category: "Data Visualization Dashboards", title: "Survey Results Analyzer", purpose: "Upload survey data (CSV) and automatically generate summary charts.", features: ["CSV upload", "Automatic question type detection", "Appropriate chart generation", "Filtering by demographics", "Cross-tabulation", "Export visualizations"], libraries: "PapaParse, Chart.js" },
-            { id: 8, category: "Data Visualization Dashboards", title: "Financial Portfolio Performance Visualizer", purpose: "Input or upload portfolio data to visualize allocation, growth, and risk.", features: ["Manual entry or CSV upload", "Donut chart for allocation", "Line chart for value over time", "Basic metric calculation", "Benchmark comparison"], libraries: "Chart.js, PapaParse" },
-            { id: 9, category: "Data Visualization Dashboards", title: "Web Analytics Dashboard Mockup", purpose: "Mimic web analytics dashboard using simulated or uploaded data.", features: ["Simulated data / CSV upload", "KPI cards (Glassmorphism)", "Trend charts", "Source bar charts", "Simple geo map", "Date range selection"], libraries: "Chart.js, PapaParse (optional)" },
-            { id: 10, category: "Data Visualization Dashboards", title: "Personal Health Data Dashboard", purpose: "Input or upload personal health metrics and visualize trends.", features: ["Data entry forms", "CSV import/export", "Customizable metrics", "Line/bar charts", "Goal setting visualization", "LocalStorage persistence"], libraries: "Chart.js, PapaParse" },
-            { id: 11, category: "Data Visualization Dashboards", title: "A/B Test Result Visualizer", purpose: "Input A/B test data and visualize performance differences.", features: ["Input visitors/conversions", "Calculate conversion rates", "Bar chart comparison", "Confidence interval visualization (simplified)", "Significance indicator"], libraries: "Chart.js" },
-            // --- II. Creative Tools ---
-            { id: 12, category: "Creative Tools", title: "Generative Art Playground (p5.js)", purpose: "Create abstract generative art using sliders and controls manipulating p5.js algorithms.", features: ["Multiple generative algorithms", "Parameter controls (sliders, color pickers)", "Real-time canvas updates", "Pause/play", "Save artwork as PNG", "Preset configurations"], libraries: "p5.js" },
-            { id: 13, category: "Creative Tools", title: "Simple Sprite Sheet Animator", purpose: "Upload sprite sheet, define animations, preview/export as GIF.", features: ["Image upload", "Grid overlay", "Animation definition UI", "Live preview", "GIF export (needs JS GIF library)", "Save/load definitions (LocalStorage)"], libraries: "Canvas API, gif.js (or similar CDN lib)" },
-            { id: 14, category: "Creative Tools", title: "Interactive SVG Icon Editor", purpose: "Load/edit simple SVG icons (paths, colors, strokes) and export.", features: ["SVG upload/presets", "Path point manipulation (basic)", "Color palette application", "Stroke controls", "Live preview", "Export SVG code/file"], libraries: "SVG manipulation via JS DOM" },
-            { id: 15, category: "Creative Tools", title: "Pixel Art Studio", purpose: "Grid-based editor for creating pixel art.", features: ["Configurable grid size", "Color palette tool", "Drawing tools", "Layer support (basic)", "Live preview", "Zoom", "Export PNG", "Save/load project (LocalStorage)"], libraries: "Canvas API" },
-            { id: 16, category: "Creative Tools", title: "Mandala Generator", purpose: "Create intricate mandala patterns with radial symmetry.", features: ["Canvas drawing", "Customizable symmetry sectors", "Brush types/colors", "Real-time mirroring", "Undo/redo", "Export PNG/SVG"], libraries: "Canvas API or p5.js" },
-            { id: 17, category: "Creative Tools", title: "CSS Gradient & Pattern Generator", purpose: "Visually design complex CSS gradients and background patterns.", features: ["Interactive gradient editor", "Pattern selection", "Real-time preview", "Generate CSS code", "Save favorites (LocalStorage)"], libraries: "Vanilla JS/CSS" },
-            { id: 18, category: "Creative Tools", title: "3D Logo/Text Extruder (Simplified)", purpose: "Create simple 3D extruded text/shapes using Three.js.", features: ["Text input", "Font selection", "Extrusion controls", "Material color/shininess", "Simple lighting", "Orbit controls", "Export snapshot PNG"], libraries: "Three.js" },
-            { id: 19, category: "Creative Tools", title: "Procedural Terrain Generator (2D)", purpose: "Generate 2D heightmap terrain using noise algorithms.", features: ["Noise parameter controls", "Color ramp editor", "Real-time canvas rendering", "Seed input", "Export PNG heightmap"], libraries: "p5.js or Canvas API with noise functions" },
-            { id: 20, category: "Creative Tools", title: "Emoji Mashup Mixer", purpose: "Select two emojis and visually blend parts of them (humorous).", features: ["Emoji selectors", "Canvas display", "Basic image manipulation", "Humorous effects", "Save PNG"], libraries: "Canvas API" },
-            { id: 21, category: "Creative Tools", title: "Interactive Kaleidoscope", purpose: "Simulate kaleidoscope effect using drawing or uploaded images.", features: ["Canvas drawing/Image upload", "Selectable reflection segments", "Real-time rendering", "Animation options", "Export snapshot PNG"], libraries: "Canvas API or p5.js" },
-             // --- III. AI / ML Playground Apps ---
-            { id: 22, category: "AI / ML Playground Apps", title: "Neural Network Visualizer & Trainer (Simple Classification)", purpose: "Define/upload data, configure/train a small NN (brain.js), visualize decision boundary.", features: ["Data input (canvas click/CSV)", "Configurable NN layers/neurons", "Activation function selection", "Real-time training progress chart", "Canvas visualization", "Export trained model (JSON)"], libraries: "brain.js, Chart.js, p5.js or Canvas" },
-            { id: 23, category: "AI / ML Playground Apps", title: "Basic Regression Playground", purpose: "Input/upload 2D data, train simple regression model.", features: ["Data input (click/CSV)", "Scatter plot visualization", "Train regression model", "Visualize regression line/curve", "Display equation/R-squared", "Make predictions"], libraries: "brain.js (optional), Chart.js or p5.js" },
-            { id: 24, category: "AI / ML Playground Apps", title: "Color Shade Classifier", purpose: "Train a simple NN to classify colors (RGB) into categories.", features: ["Color picker input", "User-defined categories", "Train brain.js network", "Real-time accuracy feedback", "Visualize color space (simplified)", "Test new colors"], libraries: "brain.js" },
-            { id: 25, category: "AI / ML Playground Apps", title: "Handwritten Digit Recognizer (MNIST Trainer Mockup)", purpose: "Draw digits, train simple NN (brain.js) for recognition.", features: ["Canvas drawing input", "Preprocessing", "Train brain.js network", "Real-time prediction", "Accuracy tracking", "Visualize NN weights (simplified)"], libraries: "brain.js, Canvas API" },
-            { id: 26, category: "AI / ML Playground Apps", title: "Simple Recommendation Engine Simulator", purpose: "Input preferences, simulate basic recommendation logic.", features: ["Data input forms", "Similarity calculation", "Generate recommendations", "Visualize user-item matrix", "LocalStorage persistence"], libraries: "Chart.js (heatmap), Custom JS logic" },
-            { id: 27, category: "AI / ML Playground Apps", title: "XOR Problem Solver", purpose: "Train NN (brain.js) to solve XOR, visualize process.", features: ["Fixed XOR dataset", "NN config UI", "Training button", "Real-time error chart", "Visualize decision boundaries"], libraries: "brain.js, Chart.js, p5.js/Canvas" },
-            { id: 28, category: "AI / ML Playground Apps", title: "Sentiment Analysis Trainer (Keyword-Based)", purpose: "Input labeled text, train simple keyword model, test.", features: ["Text input/labeling", "Client-side training (keyword scoring)", "Test input", "Predicted sentiment output", "Accuracy display"], libraries: "Custom JS logic" },
-            { id: 29, category: "AI / ML Playground Apps", title: "Decision Tree Visualizer", purpose: "Input dataset (CSV), build/visualize decision tree.", features: ["CSV upload", "Feature selection UI", "Client-side decision tree algorithm (simple)", "Interactive tree visualization", "Display classification rules"], libraries: "PapaParse, D3.js or SVG generation" },
-            { id: 30, category: "AI / ML Playground Apps", title: "Genetic Algorithm Explorer (Simple Optimization)", purpose: "Use GA for simple optimization, visualize evolution.", features: ["Define problem parameters", "Configure GA settings", "Run simulation", "Visualize fitness over generations", "Visualize best solution"], libraries: "Chart.js, p5.js/Canvas, custom GA logic" },
-            { id: 31, category: "AI / ML Playground Apps", title: "Rock-Paper-Scissors AI Trainer", purpose: "Play RPS against AI that learns patterns.", features: ["Game interface", "Learning AI opponent", "Visualize AI predictions/patterns", "Win/loss statistics"], libraries: "Custom JS logic, Chart.js (optional)" },
-            // --- IV. Educational Simulators ---
-            { id: 32, category: "Educational Simulators", title: "Interactive Function Plotter (2D/3D)", purpose: "Input mathematical functions, visualize interactively.", features: ["Equation input", "Adjustable plot range", "2D plotting", "Basic 3D plotting", "Parameter sliders", "Zoom/pan"], libraries: "Chart.js, p5.js, Three.js, math.js (parsing)" },
-            { id: 33, category: "Educational Simulators", title: "Simple Harmonic Motion Simulator", purpose: "Visualize mass-spring or simple pendulum motion.", features: ["Parameter sliders", "p5.js/Canvas animation", "Plots of position/velocity/acceleration", "Energy visualization"], libraries: "p5.js/Canvas, Chart.js" },
-            { id: 34, category: "Educational Simulators", title: "Projectile Motion Simulator", purpose: "Launch projectiles, visualize trajectories.", features: ["Parameter sliders", "p5.js/Canvas animation", "Real-time display", "Path tracing", "Target challenge"], libraries: "p5.js/Canvas" },
-            { id: 35, category: "Educational Simulators", title: "Gravity & Orbits Simulator (2D)", purpose: "Simulate gravitational interaction between bodies.", features: ["Add/remove bodies", "p5.js/Canvas visualization", "Orbit trails", "Collision detection", "Energy/momentum display"], libraries: "p5.js/Canvas" },
-            { id: 36, category: "Educational Simulators", title: "Basic Circuit Simulator (DC)", purpose: "Build simple DC circuits, visualize voltage/current.", features: ["Drag-and-drop components", "Set values", "Calculate/display voltage/current", "Visual current flow"], libraries: "SVG or Canvas, custom JS circuit solver" },
-            { id: 37, category: "Educational Simulators", title: "Wave Interference Simulator (2D)", purpose: "Visualize interference patterns from multiple wave sources.", features: ["Place wave sources", "Adjustable parameters", "Real-time visualization", "Sliders"], libraries: "p5.js/Canvas" },
-            { id: 38, category: "Educational Simulators", title: "Logic Gate Playground", purpose: "Connect basic logic gates, observe behavior.", features: ["Drag-and-drop gates", "Wiring tool", "Input switches", "Output LEDs", "Real-time signal propagation", "Truth table generation"], libraries: "SVG or Canvas, custom JS logic" },
-            { id: 39, category: "Educational Simulators", title: "Fourier Series Explorer", purpose: "Visualize waveform decomposition/synthesis.", features: ["Select/draw waveform", "Harmonic controls", "Animation of components/sum", "Frequency spectrum chart"], libraries: "p5.js/Canvas, Chart.js" },
-            { id: 40, category: "Educational Simulators", title: "Cellular Automata Simulator (e.g., Game of Life)", purpose: "Simulate 1D/2D cellular automata.", features: ["Grid display", "Configurable grid/rules", "Step/continuous simulation", "Draw initial state", "Save/load patterns"], libraries: "p5.js/Canvas, LocalStorage" },
-            { id: 41, category: "Educational Simulators", title: "Sorting Algorithm Visualizer", purpose: "Visualize steps of various sorting algorithms.", features: ["Generate random array (bars)", "Select algorithm", "Step execution controls", "Animation speed", "Highlighting", "Performance counters"], libraries: "p5.js/Canvas or D3.js" },
-            // --- V. Finance & Budgeting Tools ---
-            { id: 42, category: "Finance & Budgeting", title: "Interactive Budget Planner & Analyzer", purpose: "Set budget, track expenses/income, visualize spending.", features: ["Define categories/limits", "Input transactions", "CSV import/export", "Spending charts", "Balance chart", "Budget vs. actual", "LocalStorage persistence"], libraries: "Chart.js, PapaParse, LocalStorage" },
-            { id: 43, category: "Finance & Budgeting", title: "Loan & Mortgage Calculator Suite", purpose: "Calculate payments, amortization, compare loans.", features: ["Input loan details", "Calculate payment", "Interactive amortization table", "Principal vs. interest chart", "Compare scenarios"], libraries: "Chart.js" },
-            { id: 44, category: "Finance & Budgeting", title: "Investment ROI & Future Value Calculator", purpose: "Project future value of investments.", features: ["Input investment details", "Interactive growth chart", "Year-by-year table", "Sensitivity analysis"], libraries: "Chart.js" },
-            { id: 45, category: "Finance & Budgeting", title: "Savings Goal Planner", purpose: "Plan how to reach savings goals.", features: ["Define goals", "Input savings/contributions", "Calculate required rate/time", "Visualize progress", "LocalStorage persistence"], libraries: "Chart.js (optional), LocalStorage" },
-            { id: 46, category: "Finance & Budgeting", title: "Currency Converter Dashboard", purpose: "Convert currencies using manually updated rates.", features: ["Define currencies/rates", "Input amount", "See multiple conversions", "Save rate tables"], libraries: "Vanilla JS, LocalStorage" },
-            { id: 47, category: "Finance & Budgeting", title: "Freelancer Project Profitability Calculator", purpose: "Calculate estimated profitability of projects.", features: ["Input hours/rate/expenses", "Calculate revenue/cost/profit/margin", "Break-even analysis", "Compare scenarios"], libraries: "Vanilla JS" },
-            { id: 48, category: "Finance & Budgeting", title: "Retirement Savings Simulator (401k/IRA)", purpose: "Simulate retirement savings growth.", features: ["Input personal/financial details", "Interactive projection chart", "Analyze impact of changes"], libraries: "Chart.js" },
-            { id: 49, category: "Finance & Budgeting", title: "Net Worth Tracker", purpose: "Track assets and liabilities, visualize net worth.", features: ["Input assets/liabilities", "Calculate net worth", "Trend chart", "Breakdown chart", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            { id: 50, category: "Finance & Budgeting", title: "Stock Portfolio Performance Tracker (Manual Entry)", purpose: "Manually track stocks, visualize performance.", features: ["Input transactions", "Calculate cost basis/value (manual price update)", "Gain calculation", "Allocation chart", "Performance chart", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            { id: 51, category: "Finance & Budgeting", title: "Spreadsheet Synthesizer (Playful)", purpose: "Spreadsheet where cells trigger audio/visuals.", features: ["Grid interface", "Input numbers/formulas", "Map values to audio/visuals", "Data-driven soundscapes/visuals"], libraries: "Web Audio API, p5.js (optional), Custom JS grid" },
-            // --- VI. Health & Bio Trackers ---
-             { id: 52, category: "Health & Bio Trackers", title: "BMI & Body Fat Percentage Calculator/Visualizer", purpose: "Calculate BMI/BFP, track changes.", features: ["Input measurements", "Calculate BMI/BFP", "Visualize results/history", "Show classification"], libraries: "Chart.js, LocalStorage" },
-            { id: 53, category: "Health & Bio Trackers", title: "Habit Tracker & Streaks Visualizer", purpose: "Define habits, track completion streaks.", features: ["Define habits", "Calendar marking", "Streak calculation", "Visualization", "Motivational messages", "LocalStorage persistence"], libraries: "Chart.js (optional), LocalStorage" },
-            { id: 54, category: "Health & Bio Trackers", title: "Calorie & Macronutrient Tracker", purpose: "Log meals, track intake against targets.", features: ["Define targets", "Food database input", "Meal logging", "Intake vs. target charts", "History tracking", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            { id: 55, category: "Health & Bio Trackers", title: "Hydration Tracker", purpose: "Track daily water intake.", features: ["Set goal", "Log intake", "Visual progress indicator", "Reminders", "History chart"], libraries: "Chart.js (optional), LocalStorage" },
-            { id: 56, category: "Health & Bio Trackers", title: "Sleep Log & Analyzer", purpose: "Log sleep duration/quality, visualize patterns.", features: ["Input sleep times/quality", "Calculate duration", "Charts", "Average calculation", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            { id: 57, category: "Health & Bio Trackers", title: "Mood Tracker & Journal", purpose: "Log mood, triggers, journal entries.", features: ["Mood selection", "Trigger tagging", "Journal entry", "Calendar view", "Correlation charts", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            { id: 58, category: "Health & Bio Trackers", title: "Medication & Supplement Tracker", purpose: "Schedule and track medication intake.", features: ["Define meds/schedule", "Daily checklist", "History log", "Adherence percentage", "Reminders", "LocalStorage persistence"], libraries: "LocalStorage" },
-            { id: 59, category: "Health & Bio Trackers", title: "Exercise Log & Progress Visualizer", purpose: "Log workouts, visualize progress.", features: ["Input workout details", "Track metrics", "Progress charts", "Calculate volume/duration", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            { id: 60, category: "Health & Bio Trackers", title: "Blood Pressure & Heart Rate Tracker", purpose: "Log BP/HR readings, visualize trends.", features: ["Input readings", "Charts", "Highlight against categories", "CSV export", "LocalStorage persistence"], libraries: "Chart.js, PapaParse (export), LocalStorage" },
-            { id: 61, category: "Health & Bio Trackers", title: "Symptom Tracker", purpose: "Log symptom occurrence/severity.", features: ["Define symptoms", "Input occurrences/severity", "Notes/triggers", "Calendar heatmap", "Frequency/severity charts", "LocalStorage persistence"], libraries: "Chart.js, LocalStorage" },
-            // --- VII. Gamified Utilities ---
-            { id: 62, category: "Gamified Utilities", title: "Gamified Pomodoro Timer", purpose: "Pomodoro timer rewarding sessions with points/visual progress.", features: ["Configurable timers", "Visual display", "Simple reward system", "Session history", "Sound notifications"], libraries: "p5.js/Canvas (optional)" },
-            { id: 63, category: "Gamified Utilities", title: "RPG Character Stat Builder/Visualizer", purpose: "Allocate stat points, visualize build.", features: ["Selectable rulesets", "Stat allocation UI", "Calculate derived stats", "Radar chart visualization", "Save/load builds"], libraries: "Chart.js, LocalStorage" },
-            { id: 64, category: "Gamified Utilities", title: "Interactive Dice Roller & Probability Explorer", purpose: "Roll dice, visualize probability distributions.", features: ["Select dice/modifiers", "Roll simulation", "Sum display", "Histogram of results", "Calculate probabilities"], libraries: "Chart.js, p5.js/Canvas (optional)" },
-            { id: 65, category: "Gamified Utilities", title: "Fitness Challenge Tracker (Gamified)", purpose: "Track fitness challenge progress with levels/badges.", features: ["Define challenge", "Log progress", "Visual progress bar", "Unlock badges/levels", "Streak tracking"], libraries: "Canvas/p5.js (optional), LocalStorage" },
-            { id: 66, category: "Gamified Utilities", title: "Typing Speed Test & Trainer Game", purpose: "Test typing speed/accuracy with gamified elements.", features: ["Display text", "Track typing", "Calculate WPM/accuracy", "Highlight errors", "Scoring/levels", "History"], libraries: "Chart.js (optional), p5.js (optional)" },
-            { id: 67, category: "Gamified Utilities", title: "Decision Spinner Maker", purpose: "Create custom spinners for decisions/games.", features: ["Input segments", "Customizable colors/text", "Interactive spinning animation", "Random result", "Save/load spinners"], libraries: "Canvas/p5.js, LocalStorage" },
-            { id: 68, category: "Gamified Utilities", title: "Loot Drop Simulator", purpose: "Simulate loot drops based on configurable rates.", features: ["Define item rarities/chances", "Simulate drops", "Display results", "Visualize rarity distribution"], libraries: "Chart.js" },
-            { id: 69, category: "Gamified Utilities", title: "Kanban Racer (Playful)", purpose: "Kanban board where tasks visually race or unlock achievements.", features: ["Standard Kanban board", "Visual race elements", "Animations/scoring on task movement"], libraries: "Custom JS/CSS, Canvas/p5.js (optional)" },
-            { id: 70, category: "Gamified Utilities", title: "Personal Finance Quest", purpose: "Frame budgeting/saving as quests with XP/levels.", features: ["Link budget/goals to quests", "XP for milestones", "Level-up system", "XP bars", "Simple avatar"], libraries: "Chart.js, Canvas, LocalStorage" },
-            { id: 71, category: "Gamified Utilities", title: "Code Refactoring Challenge Timer", purpose: "Timer with checklist/prompts for refactoring sessions.", features: ["Set timer", "Display refactoring checklist", "Scoring", "Session history"], libraries: "Vanilla JS, LocalStorage" },
-            // --- VIII. Productivity Tools ---
-            { id: 72, category: "Productivity Tools", title: "Advanced Kanban Board", purpose: "Client-side Kanban with tags, due dates, filtering.", features: ["Multiple boards/columns", "Drag-and-drop cards", "Card details (checklist, due date, tags)", "Filtering", "WIP limits", "Archive", "LocalStorage persistence"], libraries: "Custom JS/CSS (maybe drag-drop lib), LocalStorage" },
-            { id: 73, category: "Productivity Tools", title: "Goal Setting & SMART Tracker", purpose: "Define SMART goals, track key results.", features: ["Guided goal creation", "Define key results", "Progress tracking", "Deadline reminders", "Visualize hierarchy", "LocalStorage persistence"], libraries: "Chart.js (optional), LocalStorage" },
-            { id: 74, category: "Productivity Tools", title: "Time Blocking Calendar Assistant", purpose: "Visually block time on a weekly calendar.", features: ["Weekly grid interface", "Create/edit time blocks", "Task categories", "Time allocation summary chart", "Recurring blocks", "LocalStorage persistence"], libraries: "Chart.js (optional), Custom JS/CSS" },
-            { id: 75, category: "Productivity Tools", title: "Decision Matrix Analyzer (Weighted Scoring)", purpose: "Compare options against weighted criteria.", features: ["Define criteria/weights", "Define options", "Score options", "Calculate weighted scores", "Table display", "Score visualization", "Save/load matrices"], libraries: "Chart.js, LocalStorage" },
-            { id: 76, category: "Productivity Tools", title: "Eisenhower Matrix Task Sorter", purpose: "Prioritize tasks by urgency/importance.", features: ["Input tasks", "Rate urgency/importance", "Automatic quadrant placement", "Interactive view", "LocalStorage persistence"], libraries: "Custom JS/CSS, LocalStorage" },
-            { id: 77, category: "Productivity Tools", title: "Personal CRM (Simple Contact Manager)", purpose: "Track contacts and interaction history.", features: ["Add/edit contacts", "Log interactions", "Tag contacts", "Search/filter", "Reminders", "LocalStorage persistence"], libraries: "LocalStorage" },
-            { id: 78, category: "Productivity Tools", title: "Digital Bullet Journal (Simplified)", purpose: "Digital implementation of bullet journaling.", features: ["Daily/weekly log views", "Input items (task, event, note)", "Status tracking", "Tagging/collections", "Search", "LocalStorage persistence"], libraries: "LocalStorage" },
-            { id: 79, category: "Productivity Tools", title: "Meeting Notes & Action Item Tracker", purpose: "Take structured notes, extract action items.", features: ["Basic rich text editor", "Predefined sections", "Tag action items", "Summary view of pending items", "LocalStorage persistence"], libraries: "LocalStorage" },
-            { id: 80, category: "Productivity Tools", title: "Flowchart & Mind Map Creator (Basic)", purpose: "Create simple flowcharts or mind maps.", features: ["Canvas/SVG drawing area", "Add nodes/connectors", "Basic styling", "Manual layout", "Export SVG/PNG", "Save/load structure"], libraries: "SVG or Canvas API, D3.js (optional), LocalStorage" },
-            { id: 81, category: "Productivity Tools", title: "Project Timeline Generator (Gantt-like)", purpose: "Create simple project timelines visually.", features: ["Define tasks (dates/duration)", "Visualize on timeline", "Dependencies (simple)", "Milestones", "Drag-and-drop adjustment", "Export visual"], libraries: "SVG or Canvas API, D3.js (optional)" },
-            // --- IX. Interactive Editors ---
-            { id: 82, category: "Interactive Editors", title: "Resume Builder with Live Preview", purpose: "Fill structured fields, see formatted resume preview update live.", features: ["Form inputs", "Multiple templates (CSS)", "Live preview panel", "Reorder sections", "Export HTML/Print PDF"], libraries: "Vanilla JS/CSS" },
-            { id: 83, category: "Interactive Editors", title: "CSS Theme Generator (Glassmorphism Focus)", purpose: "Interactively create Glassmorphism themes, export CSS.", features: ["Controls for blur, transparency, colors, borders", "Live preview area", "Generate CSS variables"], libraries: "Vanilla JS/CSS" },
-            { id: 84, category: "Interactive Editors", title: "Markdown Editor with Live Preview & Style Options", purpose: "Write Markdown, see live HTML preview with style options.", features: ["Markdown input", "Live preview panel", "Style selection", "Export HTML", "Save text"], libraries: "Marked.js or Showdown.js, LocalStorage" },
-            { id: 85, category: "Interactive Editors", title: "Mini Vector Logo Editor (Figma-like Emulation)", purpose: "Create simple vector logos on canvas.", features: ["Canvas area", "Basic shape/pen/text tools", "Color fill/stroke", "Layering", "Transformations", "SVG export"], libraries: "Canvas API or SVG.js" },
-            { id: 86, category: "Interactive Editors", title: "Code Snippet Manager & Presenter", purpose: "Store, tag, present code snippets with syntax highlighting.", features: ["Code input", "Language selection", "Syntax highlighting", "Tagging", "Search/filter", "Save library", "Presentation mode"], libraries: "Prism.js or highlight.js, LocalStorage" },
-            { id: 87, category: "Interactive Editors", title: "Interactive Color Palette Generator", purpose: "Generate harmonious color palettes.", features: ["Base color picker", "Select harmony rule", "Generate swatches", "Adjust colors", "Visualize on UI samples", "Export palette"], libraries: "Vanilla JS/CSS (color logic)" },
-            { id: 88, category: "Interactive Editors", title: "JSON Editor & Formatter", purpose: "Edit, validate, format, visualize JSON data.", features: ["JSON input", "Syntax highlighting", "Formatting", "Validation", "Tree view visualization", "Load/Save file", "Save snippets"], libraries: "Syntax highlighter lib, Custom JS, LocalStorage" },
-            { id: 89, category: "Interactive Editors", title: "Regular Expression Tester & Visualizer", purpose: "Test regex, visualize matches/groups.", features: ["Regex/test string inputs", "Real-time match highlighting", "Display groups", "Cheatsheet/builder (optional)", "Regex structure visualization (optional)"], libraries: "Vanilla JS, D3.js or SVG (optional)" },
-            { id: 90, category: "Interactive Editors", title: "Presentation Slide Editor (Basic)", purpose: "Create simple presentation slides.", features: ["Add/remove/reorder slides", "Basic layouts", "Text editing", "Image upload", "Presentation mode", "Save structure"], libraries: "Custom JS/CSS, LocalStorage" },
-            // --- X. Simulation Engines ---
-            { id: 91, category: "Simulation Engines", title: "Particle Physics Sandbox (2D)", purpose: "Simulate interactions between particles with customizable forces.", features: ["Add particles", "Define forces", "p5.js/Canvas visualization", "Collision detection", "Parameter sliders"], libraries: "p5.js/Canvas" },
-            { id: 92, category: "Simulation Engines", title: "Ecosystem Simulator (Predator-Prey)", purpose: "Simulate population dynamics.", features: ["Set initial conditions/rates", "Visualize populations (map or chart)", "Parameter sliders"], libraries: "p5.js/Canvas or Chart.js" },
-            { id: 93, category: "Simulation Engines", title: "Traffic Flow Simulator (Single Intersection)", purpose: "Simulate car traffic through an intersection.", features: ["Visualize intersection", "Configurable lights/arrival rates", "Car movement/queuing", "Display metrics"], libraries: "p5.js/Canvas" },
-            { id: 94, category: "Simulation Engines", title: "Sand/Powder Simulation (Falling Sand Game)", purpose: "Cellular automata simulation of falling sand/liquids.", features: ["Canvas grid", "Tools to paint elements", "Simulation loop", "Adjustable speed"], libraries: "Canvas API" },
-            { id: 95, category: "Simulation Engines", title: "Simple Cloth Simulation (Verlet Integration)", purpose: "Simulate a 2D cloth mesh.", features: ["Define cloth grid", "p5.js/Canvas rendering", "Interaction (drag points)", "Adjustable physics", "Pin points"], libraries: "p5.js/Canvas" },
-            { id: 96, category: "Simulation Engines", title: "Flocking Simulation (Boids)", purpose: "Simulate flocking behavior.", features: ["Simulate agents", "Separation/alignment/cohesion rules", "p5.js/Canvas visualization", "Adjust rule weights", "Obstacles"], libraries: "p5.js/Canvas" },
-            { id: 97, category: "Simulation Engines", title: "Diffusion-Limited Aggregation (DLA) Simulator", purpose: "Simulate fractal growth patterns.", features: ["Canvas visualization", "Random particle walks", "Parameter controls", "Export PNG"], libraries: "Canvas API or p5.js" },
-            // --- XI. Infographic Generators ---
-            { id: 98, category: "Infographic Generators", title: "Dynamic Infographic Card Creator", purpose: "Create simple cards combining icon, statistic, mini-chart.", features: ["Select icon", "Input statistic", "Choose mini-viz", "Customize colors", "Layout options", "Export SVG/PNG"], libraries: "SVG generation, Chart.js" },
-            { id: 99, category: "Infographic Generators", title: "Timeline Infographic Generator", purpose: "Create visual timelines with events.", features: ["Input events", "Automatic layout", "Style options", "Export SVG/PNG"], libraries: "SVG generation or HTML+CSS" },
-            { id: 100, category: "Infographic Generators", title: "Comparative Stat Infographic Builder", purpose: "Visually compare 2-3 statistics.", features: ["Input data", "Select visualization style", "Customize colors/icons", "Add title/source", "Export SVG/PNG"], libraries: "SVG generation, Chart.js (optional)" },
-             // --- XII. Code Visualizers ---
-            { id: 101, category: "Code Visualizers", title: "JSON Data Structure Visualizer", purpose: "Paste JSON, visualize structure as interactive tree.", features: ["JSON input", "Validation", "Collapsible tree view", "Search nodes", "Display data types"], libraries: "D3.js or Custom JS/CSS" },
-            { id: 102, category: "Code Visualizers", title: "CSS Specificity Calculator & Visualizer", purpose: "Input CSS selector, calculate/visualize specificity.", features: ["Selector input", "Parse selector", "Calculate specificity", "Visualize score", "Compare selectors"], libraries: "Custom JS parsing/calculation" },
-            { id: 103, category: "Code Visualizers", title: "Basic HTML DOM Tree Visualizer", purpose: "Paste HTML, visualize DOM structure as tree.", features: ["HTML input", "Parse HTML", "Generate tree visualization", "Highlight element on hover"], libraries: "D3.js (optional), Vanilla JS DOM" },
-            // --- XIII. Forms & Data Tools ---
-            { id: 104, category: "Forms & Data Tools", title: "CSV to JSON Converter & Configurator", purpose: "Convert CSV to various JSON formats.", features: ["CSV upload", "Header/type detection options", "Select output structure", "Live preview", "Download JSON"], libraries: "PapaParse" },
-            { id: 105, category: "Forms & Data Tools", title: "JSON to CSV Converter", purpose: "Convert JSON (array of objects) to CSV.", features: ["JSON input/upload", "Header detection", "Nested object handling", "Delimiter selection", "Preview CSV", "Download CSV"], libraries: "PapaParse (CSV generation), Custom JSON parsing" },
-            { id: 106, category: "Forms & Data Tools", title: "Interactive Form Builder (Schema-based)", purpose: "Define form structure via JSON schema, render form.", features: ["JSON schema input", "Render HTML form dynamically", "Basic validation", "Collect data as JSON", "Export data"], libraries: "Custom JS schema parsing/form generation" },
-            { id: 107, category: "Forms & Data Tools", title: "CSV Data Cleaner & Filter Tool", purpose: "Upload CSV, perform simple cleaning/filtering.", features: ["CSV upload", "Table display", "Filtering UI", "Remove duplicates", "Handle missing data", "Export cleaned CSV"], libraries: "PapaParse, Custom JS data manipulation" },
-            // --- XIV. Music & Sound ---
-            { id: 108, category: "Music & Sound", title: "Simple Drum Machine / Sequencer", purpose: "Create basic drum patterns using step sequencer.", features: ["Grid interface", "Load basic samples", "Program beats", "Playback controls", "Volume controls", "Save/load patterns"], libraries: "Web Audio API, LocalStorage" },
-            { id: 109, category: "Music & Sound", title: "Audio Visualizer Playground", purpose: "Visualize audio input (mic/file).", features: ["Select audio source", "Web Audio API analysis", "Canvas/p5.js rendering", "Options for viz type/colors", "FFT size adjustment"], libraries: "Web Audio API, Canvas/p5.js" },
-            { id: 110, category: "Music & Sound", title: "Synthesizer Explorer (Basic Oscillators & Effects)", purpose: "Experiment with basic sound synthesis.", features: ["Select oscillator", "ADSR envelope", "Filter controls", "Play notes (keyboard/on-screen)", "Basic effects", "Visualize waveform"], libraries: "Web Audio API, Canvas (optional)" },
-            // --- XV. Miscellaneous Novelty Apps ---
-            { id: 111, category: "Miscellaneous Novelty Apps", title: "Corporate Jargon Translator (Humorous)", purpose: "'Translate' plain English to corporate buzzwords.", features: ["Text input", "Predefined dictionary", "Exaggerated translation", "Sliders for 'synergy level'"], libraries: "Custom JS logic" },
-            { id: 112, category: "Miscellaneous Novelty Apps", title: "Emoji Mood Forecaster (Humorous / AI Parody)", purpose: "Playfully 'predicts' mood using nonsensical inputs.", features: ["Unrelated input sliders", "Feeds arbitrary brain.js model", "Outputs emoji + faux confidence"], libraries: "brain.js (optional), Vanilla JS" },
-            { id: 113, category: "Miscellaneous Novelty Apps", title: "Procedural Fantasy Map Generator (Simple)", purpose: "Generate simple fantasy maps.", features: ["Noise for terrain", "Color by height", "Simple river/town placement", "Render on Canvas/p5.js", "Export PNG"], libraries: "p5.js/Canvas with noise functions" },
-            { id: 114, category: "Miscellaneous Novelty Apps", title: "ASCII Art Generator (Image-based)", purpose: "Convert uploaded images into ASCII art.", features: ["Image upload", "Resize/process on canvas", "Map brightness to ASCII chars", "Display result", "Options", "Copy output"], libraries: "Canvas API" },
-            { id: 115, category: "Miscellaneous Novelty Apps", title: "'What to Watch?' Randomizer & Filter", purpose: "Decide what movie/show to watch from user list.", features: ["Input list", "Tagging/filtering", "Random selection", "Display selection", "Save list"], libraries: "LocalStorage" }
-        ];
+  <main class="max-w-6xl mx-auto px-4 pb-28">
+    <!-- Quick Build mirrors original, now upgraded -->
+    <section class="mt-6 grid lg:grid-cols-2 gap-4">
+      <!-- Builder -->
+      <article class="glass p-4 md:p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">1) Build</h2>
+          <div class="flex gap-2">
+            <button id="openLibrary" class="btn px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300">Library (∞)</button>
+            <button id="loadHash" class="btn px-3 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300">Load URL</button>
+          </div>
+        </div>
 
-        const selector = document.getElementById('app-selector');
-        const detailsDiv = document.getElementById('app-details');
-        const promptAreaDiv = document.getElementById('prompt-area');
-        const promptTextarea = document.getElementById('generated-prompt');
-        const copyButton = document.getElementById('copy-button');
-        const copyStatus = document.getElementById('copy-status');
+        <form id="form" class="mt-3 grid gap-3" autocomplete="off">
+          <!-- Domain + Pattern -->
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Domain</span>
+              <select id="domainSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Pattern (router suggests)</span>
+              <select id="patternSel" class="select w-full mt-1" multiple></select>
+              <p class="text-[11px] text-slate-500 mt-1">Tip: select 1–2 max. Router adds others if needed.</p>
+            </label>
+          </div>
 
-        // Populate selector
-        appIdeas.forEach(app => {
-            const option = document.createElement('option');
-            option.value = app.id;
-            option.textContent = `(${app.id}) ${app.title}`;
-            selector.appendChild(option);
-        });
+          <!-- Role -->
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Role (pick)</span>
+              <select id="roleSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Role (freeform)</span>
+              <input id="role" class="input w-full mt-1" placeholder="e.g., Senior Editor"/>
+            </label>
+          </div>
 
-        // Handle selection change
-        selector.addEventListener('change', (event) => {
-            const selectedId = parseInt(event.target.value);
-            const selectedApp = appIdeas.find(app => app.id === selectedId);
+          <!-- Task -->
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Task template</span>
+              <select id="taskSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Task (freeform)</span>
+              <input id="task" class="input w-full mt-1" placeholder="What must be done?"/>
+            </label>
+          </div>
 
-            if (selectedApp) {
-                displayAppDetails(selectedApp);
-                generateAndDisplayPrompt(selectedApp);
-                detailsDiv.style.display = 'block';
-                promptAreaDiv.style.display = 'block';
-            } else {
-                detailsDiv.style.display = 'none';
-                promptAreaDiv.style.display = 'none';
-            }
-        });
+          <!-- Audience + Style/Tone -->
+          <div class="grid md:grid-cols-3 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Audience</span>
+              <select id="audSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Style</span>
+              <select id="styleSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Tone</span>
+              <select id="toneSel" class="select w-full mt-1"></select>
+            </label>
+          </div>
 
-        // Display App Details
-        function displayAppDetails(app) {
-            document.getElementById('details-title').textContent = app.title;
-            document.getElementById('details-purpose').textContent = app.purpose;
-            document.getElementById('details-libraries').textContent = app.libraries || 'Vanilla JS/CSS, HTML5 APIs';
+          <!-- Inputs/Context -->
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Inputs/Context (select)</span>
+              <select id="inputsSel" class="select w-full mt-1" multiple></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Inputs/Context (text)</span>
+              <textarea id="inputs" rows="3" class="input w-full mt-1"></textarea>
+            </label>
+          </div>
 
-            const featuresList = document.getElementById('details-features');
-            featuresList.innerHTML = ''; // Clear previous features
-            app.features.forEach(feature => {
-                const li = document.createElement('li');
-                li.textContent = feature;
-                featuresList.appendChild(li);
-            });
+          <!-- Constraints -->
+          <div class="grid md:grid-cols-2 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Constraints (select)</span>
+              <select id="consSel" class="select w-full mt-1" multiple></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Constraints (text)</span>
+              <textarea id="constraints" rows="3" class="input w-full mt-1"></textarea>
+            </label>
+          </div>
+
+          <!-- Output Format + Verification + Next Action -->
+          <div class="grid md:grid-cols-3 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Output format</span>
+              <select id="formatSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Verification</span>
+              <select id="verifySel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Next Action</span>
+              <select id="nextSel" class="select w-full mt-1"></select>
+            </label>
+          </div>
+
+          <!-- Safety, Locale, Reading level -->
+          <div class="grid md:grid-cols-3 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Safety level</span>
+              <select id="safetySel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Locale</span>
+              <select id="localeSel" class="select w-full mt-1"></select>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Reading level</span>
+              <select id="readSel" class="select w-full mt-1"></select>
+            </label>
+          </div>
+
+          <!-- Length + Seed -->
+          <div class="grid md:grid-cols-3 gap-3">
+            <label class="block text-sm">
+              <span class="text-slate-300">Length limit (chars)</span>
+              <input id="len" type="number" min="100" max="20000" value="1200" class="input w-full mt-1 code"/>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Seed</span>
+              <input id="seed" type="number" value="1337" class="input w-full mt-1 code"/>
+            </label>
+            <label class="block text-sm">
+              <span class="text-slate-300">Branding (Shroomtop420®)</span>
+              <select id="brandSel" class="select w-full mt-1">
+                <option value="true">Include</option>
+                <option value="false">Exclude</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Actions -->
+          <div class="hr my-2"></div>
+          <div class="flex flex-wrap gap-2">
+            <button id="assemble" type="button" class="btn px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-medium">Assemble Prompt</button>
+            <button id="validate" type="button" class="btn px-4 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-300">Validate</button>
+            <button id="copyPrompt" type="button" class="btn px-4 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300">Copy Prompt</button>
+            <button id="copyJSON" type="button" class="btn px-4 py-2 rounded-xl bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300">Copy JSON</button>
+            <button id="downloadJSON" type="button" class="btn px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300">Download JSON</button>
+            <button id="shareURL" type="button" class="btn px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300">Share URL</button>
+            <label class="btn px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 cursor-pointer">
+              Import JSON<input id="importJSON" type="file" accept="application/json" class="hidden">
+            </label>
+            <button id="reset" type="button" class="btn px-4 py-2 rounded-xl bg-[#182033] text-slate-200">Reset</button>
+          </div>
+        </form>
+      </article>
+
+      <!-- Output -->
+      <article class="glass p-4 md:p-6">
+        <h2 class="text-lg font-semibold">2) Review & Export</h2>
+        <div class="grid gap-3">
+          <div class="rounded-xl border border-[#2a2f43] bg-[#0f1220] p-3">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-slate-300">Assembled Prompt</p>
+              <span id="meta" class="text-[10px] text-slate-500 code">seed: — • chars: —</span>
+            </div>
+            <textarea id="promptOut" class="w-full h-64 code text-sm bg-transparent outline-none" readonly placeholder="Prompt will appear here…"></textarea>
+          </div>
+
+          <div class="rounded-xl border border-[#2a2f43] bg-[#0f1220] p-3">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-slate-300">Generated JSON (PromptConfig)</p>
+              <span class="text-[10px] text-slate-500 code">schema: 2025-06-13.04</span>
+            </div>
+            <pre id="jsonOut" class="max-h-60 overflow-auto code text-xs text-slate-300"></pre>
+          </div>
+
+          <div class="rounded-xl border border-[#2a2f43] p-3">
+            <p class="text-sm text-slate-300">Validation</p>
+            <ul id="valList" class="text-sm list-disc ml-4"></ul>
+          </div>
+
+          <div class="rounded-xl border border-[#2a2f43] p-3">
+            <p class="text-sm text-slate-300">Logs</p>
+            <pre id="logs" class="max-h-40 overflow-auto text-xs code text-slate-400"></pre>
+            <div class="flex gap-2 mt-2">
+              <button id="exportLogs" class="btn px-3 py-1.5 rounded-lg bg-[#182033] text-slate-200">Export logs</button>
+              <button id="purgeLogs" class="btn px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300">Purge</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Docs -->
+    <section class="mt-6 grid gap-4">
+      <details class="glass p-4 md:p-6">
+        <summary class="cursor-pointer text-lg font-semibold">README</summary>
+        <div class="prose prose-invert max-w-none">
+          <p><strong>Magic</strong> turns any intent into a safe, validated prompt. Use Quick picks, or open the Library to mix thousands of options. Deterministic assembly produces stable output. Export raw prompt or JSON.</p>
+          <ul>
+            <li>Slots: Role, Task, Inputs/Context, Constraints, Style/Tone, Output Format, Verification, Next Action.</li>
+            <li>Patterns: Planner, Coach, Critic, Generator, Summarizer, Explainer, Rubber-Duck, Refactorer, Test-Writer, SQL-Smith, DataFrame Analyst, UX Reviewer, Experiment Designer, Lesson Planner, Policy Drafter, Risk Assessor, Translator, Router.</li>
+            <li>Safety: Sensitive domains auto-inject disclaimers (legal/medical/financial). No hidden reasoning is requested.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="glass p-4 md:p-6">
+        <summary class="cursor-pointer text-lg font-semibold">SECURITY.md (Summary)</summary>
+        <ul class="text-sm text-slate-300 list-disc ml-5">
+          <li>No secrets in code; offline by default; export is explicit.</li>
+          <li>Strict CSP; no external images; single origin only.</li>
+          <li>PWA SW caches app shell; no network writes.</li>
+          <li>Safety disclaimers; refusal path for unsafe asks.</li>
+        </ul>
+      </details>
+    </section>
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-12 text-slate-500 text-xs flex items-center justify-between">
+    <span>© <span id="yr"></span> Shroomtop420® • Neon/Futuristic • Single-File</span>
+    <span class="code">CSP strict • Offline SW • No secrets</span>
+  </footer>
+
+  <!-- Global Library Modal -->
+  <div id="libraryModal" class="modal" aria-hidden="true">
+    <div class="panel">
+      <aside class="bg-[#0d111b] border-r border-[#202436] overflow-auto">
+        <div class="p-3">
+          <input id="libSearch" class="select code w-full" placeholder="Search…">
+          <label class="block mt-2 text-xs text-slate-400">Insert into:
+            <select id="libTarget" class="select mt-1">
+              <option value="role">Role</option><option value="task">Task</option><option value="inputs">Inputs</option>
+              <option value="constraints">Constraints</option><option value="verification">Verification</option><option value="nextAction">Next Action</option>
+            </select>
+          </label>
+          <button id="libInsert" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-emerald-500/10 text-emerald-300">Insert Selected</button>
+          <button id="libClose" class="btn mt-2 w-full rounded-lg px-3 py-2 bg-rose-500/10 text-rose-300">Close</button>
+        </div>
+        <div id="tabs" class="mt-2"></div>
+      </aside>
+      <section class="bg-[#0b0e17] p-4 overflow-auto">
+        <div id="tabTitle" class="text-sm text-slate-300 mb-2">Options</div>
+        <div id="listbox" class="listbox"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script nonce="s420nonce">
+  (()=>{'use strict';
+    // ---------- DOM ----------
+    const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
+    const logEl = byId('logs'), valList = byId('valList'), promptOut = byId('promptOut'), jsonOut = byId('jsonOut'), metaEl = byId('meta');
+    byId('yr').textContent = new Date().getFullYear();
+
+    // ---------- Utilities ----------
+    const SCHEMA_VERSION = "2025-06-13.04";
+    const clamp = (n,min,max)=>Math.min(Math.max(Number(n)||0,min),max);
+    const esc = s => String(s||'').replace(/[^\n\r\t -~]/g,'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const tsv = (arr)=>arr.map(x=>`- ${x}`).join('\n');
+    function l(msg,data) { const line = JSON.stringify({ts:Date.now(),msg,data}); logEl.textContent += line + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+
+    // ---------- Options (curated, extensible) ----------
+    const DOMAINS = ["Writing","Coding","Data Analysis","Math/Reasoning","Education/Tutoring","Research & Citations","Translation/Localization","Creative Ideation","Marketing","Sales/Prospecting","Product/UX","Project Management","Operations/Process","Customer Support","DevOps/Cloud","Data Engineering","Legal (non-advisory)","Medical/Health (non-diagnostic)","Financial (non-advisory)","Career/HR","Resume/Interview","Planning/Travel","Personal Productivity","Misc/Custom"];
+    const PATTERNS = ["Router","Planner","Coach","Critic","Generator","Summarizer","Explainer","Rubber-Duck","Refactorer","Test-Writer","SQL-Smith","DataFrame Analyst","UX Reviewer","Experiment Designer","Lesson Planner","Policy Drafter","Risk Assessor","Translator"];
+    const ROLES = ["Senior Editor","Refactoring Engineer","Data Analyst","Problem Solver","Tutor","Research Summarizer","Localization Specialist","Copy Generator","Marketing Strategist","Sales Writer","UX Reviewer","Project Planner","SOP Designer","Support Guide","DevOps Planner","Data Engineer","Policy Analyst","Health Explainer","Finance Explainer","Career Coach","Interview Coach","Travel Planner","Productivity Coach","General Assistant","Founder/CEO","Full-Stack Engineer","Prompt Engineer"];
+    const AUDIENCES = ["Executives","Developers (Junior)","Developers (Senior)","Designers","Investors","Researchers","Students","Customers","Community","General Public","Regulators","QA Team","Security Review Board"];
+    const STYLES = ["Neon/Futuristic","Modern/Minimalist","Formal/Concise","Didactic/Coach","Playful","Academic","Journalistic","Sales","Legalese","Accessible","Custom"];
+    const TONES = ["Neutral","Confident","Skeptical","Encouraging","Direct","Cautious","Creative","Authoritative","Friendly"];
+    const INPUTS = ["Provided text/data only","Schema with examples","Links (trusted)","Screenshots (described)","Assumptions list","Acceptance criteria"];
+    const CONSTRAINTS = ["Be concise (≤ lengthLimit)","No speculation; mark assumptions","Provide citations for factual claims","No external images; SVG only","Single file; CDN allowed","No secrets; refuse unsafe asks","Include acceptance tests","Mobile-first & a11y","JSON-safe if applicable"];
+    const FORMATS = ["Markdown","Plaintext","JSON","HTML","CSV","Code"];
+    const VERIFY = ["List sources with links","Show assumptions","Add acceptance checks","Provide test cases","Include risk/ethics note","Validate JSON/Markdown"];
+    const NEXT = ["Offer 3 title options","Ask up to 2 clarifying questions if critical","Propose next iteration","Generate tests","Summarize key trade-offs"];
+    const SAFETY = ["General","Sensitive-Legal","Sensitive-Medical","Sensitive-Financial","Youth"];
+    const LOCALES = ["en-US","en-GB","es-ES","fr-FR","de-DE","pt-BR","hi-IN","ar","zh-CN","ja-JP","ko-KR"];
+    const READING = ["Child","Teen","Adult-General","Expert"];
+
+    const TASK_TEMPLATES = {
+      "Writing":[
+        "Write a 600-word explainer on <topic> for <audience>",
+        "Draft a press release announcing <product>",
+        "Create a 7-part outline with key points and sources"
+      ],
+      "Coding":[
+        "Refactor the given code and add unit tests",
+        "Generate a single-file app using <stack>",
+        "Write a CLI tool to <goal> with examples"
+      ],
+      "Data Analysis":[
+        "Profile dataset (cols: <cols>) and report anomalies",
+        "Design analysis plan with KPIs and charts",
+        "Summarize insights with limitations"
+      ],
+      "Marketing":[
+        "Create 5 landing headlines and 3 CTAs",
+        "Draft an email sequence for <persona>",
+        "Write ad copy variants (<=60 chars)"
+      ],
+      "Misc/Custom":[
+        "Given the goal <goal>, produce an action plan with steps",
+        "Summarize the following content with citations",
+        "Generate 10 ideas with scoring criteria"
+      ]
+    };
+
+    // ---------- Populate selects ----------
+    function fill(id, items, withEmpty=false){ const el = byId(id); el.innerHTML=''; if(withEmpty){ const o=document.createElement('option'); o.value=''; o.textContent='— choose —'; el.appendChild(o); } items.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); }); }
+    fill('domainSel', DOMAINS);
+    fill('patternSel', PATTERNS);
+    fill('roleSel', ROLES, true);
+    fill('taskSel', TASK_TEMPLATES["Misc/Custom"], true);
+    fill('audSel', AUDIENCES, true);
+    fill('styleSel', STYLES);
+    fill('toneSel', TONES);
+    fill('inputsSel', INPUTS);
+    fill('consSel', CONSTRAINTS);
+    fill('formatSel', FORMATS);
+    fill('verifySel', VERIFY);
+    fill('nextSel', NEXT);
+    fill('safetySel', SAFETY);
+    fill('localeSel', LOCALES);
+    fill('readSel', READING);
+
+    // Update task templates when domain changes
+    byId('domainSel').addEventListener('change', e=>{
+      const d = e.target.value;
+      fill('taskSel', (TASK_TEMPLATES[d]||TASK_TEMPLATES["Misc/Custom"]), true);
+      // Suggest patterns per domain
+      const suggest = {
+        "Writing":["Generator","Critic"], "Coding":["Refactorer","Test-Writer"],
+        "Data Analysis":["DataFrame Analyst","Explainer"], "Math/Reasoning":["Explainer","Planner"],
+        "Education/Tutoring":["Lesson Planner","Coach"], "Research & Citations":["Summarizer","Critic"],
+        "Translation/Localization":["Translator","Explainer"], "Creative Ideation":["Generator","Critic"],
+        "Marketing":["Planner","Generator"], "Sales/Prospecting":["Generator","Critic"],
+        "Product/UX":["UX Reviewer","Planner"], "Project Management":["Planner"],
+        "Operations/Process":["Planner","Risk Assessor"], "Customer Support":["Explainer","Policy Drafter"],
+        "DevOps/Cloud":["Planner","Risk Assessor"], "Data Engineering":["Planner","Risk Assessor"],
+        "Legal (non-advisory)":["Policy Drafter","Critic"], "Medical/Health (non-diagnostic)":["Explainer","Risk Assessor"],
+        "Financial (non-advisory)":["Explainer","Risk Assessor"], "Career/HR":["Coach","Critic"],
+        "Resume/Interview":["Coach","Critic"], "Planning/Travel":["Planner"],
+        "Personal Productivity":["Coach","Planner"], "Misc/Custom":["Router"]
+      }[d] || ["Router"];
+      const sel = byId('patternSel'); Array.from(sel.options).forEach(o=>o.selected = suggest.includes(o.value));
+    });
+
+    // Bind select quick-picks to freeform fields
+    function bindSelectToField(selId, fieldId, append=false){
+      const sel = byId(selId), fld = byId(fieldId);
+      sel.addEventListener('change', ()=>{
+        const vals = Array.from(sel.selectedOptions).map(o=>o.value).filter(Boolean);
+        if(!append){ fld.value = vals.join(', '); } else {
+          const add = sel.multiple ? vals.map(v=>`- ${v}`).join('\n') : vals[0]||'';
+          fld.value = fld.value ? (fld.value + '\n' + add) : add;
         }
+      });
+    }
+    bindSelectToField('roleSel','role');
+    bindSelectToField('taskSel','task');
+    bindSelectToField('audSel','role',true); // audience hints influence role wording if desired
+    bindSelectToField('inputsSel','inputs',true);
+    bindSelectToField('consSel','constraints',true);
+    bindSelectToField('verifySel','constraints',true);
+    bindSelectToField('nextSel','constraints',true);
 
-        // Generate and Display Prompt
-        function generateAndDisplayPrompt(app) {
-            const featuresString = app.features.map(f => `* ${f}`).join('\n');
-            const librariesString = app.libraries ? app.libraries.split(',').map(l => l.trim()).filter(l => l).map(l => `* ${l} (use latest zero-config CDN link)`).join('\n') : '* Rely primarily on vanilla ES6+ JS, HTML5 APIs (Canvas, SVG, Web Audio, etc.), and CSS3.';
+    // ---------- Config helpers ----------
+    function selected(id){ return Array.from(byId(id).selectedOptions).map(o=>o.value); }
+    function getConfig(){
+      const domain = byId('domainSel').value || "Misc/Custom";
+      const cfg = {
+        schema_version: SCHEMA_VERSION,
+        role: esc(byId('role').value || byId('roleSel').value || "Assistant"),
+        task: esc(byId('task').value || byId('taskSel').value || "Describe your goal"),
+        inputs: esc(byId('inputs').value),
+        constraints: esc(byId('constraints').value),
+        style: byId('styleSel').value || "Modern/Minimalist",
+        tone: byId('toneSel').value || "Neutral",
+        outputFormat: byId('formatSel').value || "Markdown",
+        verification: selected('verifySel')[0] || "",
+        nextAction: selected('nextSel')[0] || "",
+        domain,
+        pattern: selected('patternSel')[0] || "Router",
+        audience: selected('audSel')[0] || "",
+        lengthLimit: clamp(byId('len').value, 100, 20000),
+        references: [],
+        safetyLevel: byId('safetySel').value || (["Legal (non-advisory)","Medical/Health (non-diagnostic)","Financial (non-advisory)"].includes(domain) ? "Sensitive-"+domain.split(' ')[0] : "General"),
+        locale: byId('localeSel').value || "en-US",
+        readingLevel: byId('readSel').value || "Adult-General",
+        seed: clamp(byId('seed').value, 0, 4294967295),
+        branding: byId('brandSel').value === "true"
+      };
+      return cfg;
+    }
 
-            const prompt = `
-Act as an expert web developer specializing in creating fully standalone, single-file web applications with zero external dependencies or setup (beyond CDN libraries).
+    // ---------- Assembly ----------
+    function disclaimer(safety, domain){
+      if(safety==="Sensitive-Legal") return "This is educational information, not legal advice. Consult a qualified attorney.";
+      if(safety==="Sensitive-Medical") return "This is educational information, not medical advice. Consult a licensed clinician.";
+      if(safety==="Sensitive-Financial") return "This is informational content, not investment advice. Consider professional guidance.";
+      if(domain==="Youth") return "Use age-appropriate language and content. Avoid sensitive or harmful material.";
+      return "";
+    }
+    function assemblePrompt(cfg){
+      const blocks = [];
+      blocks.push(`ROLE: ${cfg.role}`);
+      blocks.push(`TASK: ${cfg.task}`);
+      if(cfg.audience) blocks.push(`AUDIENCE: ${cfg.audience}`);
+      if(cfg.inputs) blocks.push(`INPUTS/CONTEXT:\n${cfg.inputs}`);
+      if(cfg.constraints) blocks.push(`CONSTRAINTS:\n${cfg.constraints.split('\n').map(s=>s.startsWith('- ')?s:('- '+s)).join('\n')}`);
+      blocks.push(`STYLE/TONE: ${cfg.style} | ${cfg.tone}`);
+      blocks.push(`OUTPUT FORMAT: ${cfg.outputFormat}`);
+      if(cfg.verification) blocks.push(`VERIFICATION: ${cfg.verification}`);
+      if(cfg.nextAction) blocks.push(`NEXT ACTION: ${cfg.nextAction}`);
+      blocks.push(`PATTERN: ${cfg.pattern}`);
+      blocks.push(`GUIDANCE:\n- Do not reveal hidden reasoning or chain-of-thought.\n- Cite sources for factual claims or state uncertainty.\n- Follow safety policies. Refuse unsafe requests with alternatives.`);
+      const disc = disclaimer(cfg.safetyLevel, cfg.domain);
+      if(disc) blocks.push(`DISCLAIMER: ${disc}`);
+      let prompt = blocks.join('\n\n');
+      if(prompt.length > cfg.lengthLimit) prompt = prompt.slice(0, cfg.lengthLimit);
+      return prompt;
+    }
 
-Your task is to create the complete HTML, CSS3 (inline \`<style>\`), and modern ES6 JavaScript (inline \`<script>\`) code for the following application, delivered as a single, self-contained HTML file:
+    // ---------- Validation ----------
+    function validateCfg(cfg){
+      const errs=[], warns=[];
+      if(!cfg.role || cfg.role.length<3) errs.push("Role is required (≥3 chars).");
+      if(!cfg.task || cfg.task.length<5) errs.push("Task is required (≥5 chars).");
+      if(!cfg.outputFormat) errs.push("Output format is required.");
+      // Domain-specific safety
+      if(["Legal (non-advisory)","Medical/Health (non-diagnostic)","Financial (non-advisory)"].includes(cfg.domain)){
+        if(!cfg.safetyLevel.startsWith("Sensitive")) warns.push("Sensitive domain detected; safety disclaimer will be injected.");
+      }
+      // Length bounds
+      if(cfg.lengthLimit<100 || cfg.lengthLimit>20000) errs.push("lengthLimit out of bounds.");
+      // Formatting expectations
+      if(cfg.outputFormat==="JSON"){
+        if(!/json/i.test(cfg.constraints+cfg.verification+cfg.task)) warns.push("Output is JSON but no JSON-specific instruction found.");
+      }
+      return {ok: errs.length===0, errors:errs, warnings:warns};
+    }
 
-**App Title:** ${app.title}
-
-**Main Purpose:** ${app.purpose}
-
-**Key Features to Implement:**
-${featuresString}
-* Ability to handle user input via interactive controls (sliders, forms, buttons, drag-drop, etc., as appropriate).
-* Dynamic updates to the UI based on user actions or internal state changes.
-* Client-side data processing and logic as required by the features.
-* Data persistence using LocalStorage where appropriate (e.g., saving user settings, data, or state).
-* File input using FileReader API if data import (like CSV) is explicitly mentioned or implied.
-* File output/download using Blobs if data/image/file export is explicitly mentioned or implied.
-
-**Primary Libraries to Use (via Zero-Config CDN):**
-${librariesString}
-* Ensure all external libraries are loaded via reliable, versioned CDN links (e.g., from cdnjs, jsdelivr, unpkg).
-
-**Technical & Style Requirements:**
-* **Single File:** All HTML, CSS, and JavaScript MUST be contained within a single \`.html\` file. CSS must be within \`<style>\` tags in the \`<head>\`, and JavaScript within \`<script>\` tags near the end of the \`<body>\`. Use ES6 modules within the script tag if it helps organize complex code.
-* **Zero Setup:** The app must run directly when the HTML file is opened in a modern browser (Chrome, Firefox, Edge). No build steps, installations, or API keys allowed.
-* **Modern Code:** Use HTML5 semantic elements, modern CSS3 features (Flexbox/Grid for layout), and ES6+ JavaScript syntax (const/let, arrow functions, classes, async/await where appropriate).
-* **Visual Polish:** Implement a clean, modern, and responsive UI. Incorporate CSS3 Glassmorphism effects (subtle background blur and transparency on relevant containers, panels, or modals) for a contemporary aesthetic. Ensure good readability, contrast, and usability across different screen sizes.
-* **Complexity & Interactivity:** The implementation should match the complexity implied by the features, comparable to an advanced interactive tool or dashboard. Ensure the app feels responsive and interactive.
-* **Error Handling:** Include basic client-side error handling (e.g., for file parsing issues, invalid user input, potential API errors if using browser APIs).
-* **Comments:** Add comments to explain key sections and complex logic within the JavaScript code.
-
-Generate the complete HTML file content starting with \`<!DOCTYPE html>\` and ending with \`</html>\`. Ensure the code is well-formatted and functional.
-`;
-            promptTextarea.value = prompt.trim();
+    // ---------- Renderers ----------
+    function renderValidation(res){
+      valList.innerHTML='';
+      if(res.errors.length===0 && res.warnings.length===0){
+        const li=document.createElement('li'); li.innerHTML = `<span class="ok">✓ All checks passed.</span>`; valList.appendChild(li); return;
+      }
+      res.errors.forEach(e=>{ const li=document.createElement('li'); li.innerHTML = `<span class="err">✖ ${esc(e)}</span>`; valList.appendChild(li); });
+      res.warnings.forEach(w=>{ const li=document.createElement('li'); li.innerHTML = `<span class="warn">⚠ ${esc(w)}</span>`; valList.appendChild(li); });
+    }
+    function renderJSON(cfg){
+      const out = {
+        schema_version: cfg.schema_version,
+        project_type: "Web Tool/App",              // legacy compatibility field
+        topic: cfg.task.slice(0,90),
+        style: cfg.style,
+        stack: "HTML5 + Tailwind CSS + ES6 JS",    // default stack; adjust in constraints if needed
+        format: cfg.outputFormat==="Code" ? "Plain code (no block)" : "Single HTML file",
+        features: [],
+        special_requests: [],
+        branding: cfg.branding,
+        rules: [
+          "Output a single, self-contained file (unless ZIP is selected)",
+          "All CSS/JS must be inline or via CDN",
+          "Use semantic, accessible HTML and responsive layout",
+          "No external image dependencies (SVG/CSS/HTML only)",
+          "Match this structure: [headline/subheadline][main diagram/feature][clean, centered, visually balanced]",
+          "Do not reveal hidden reasoning; provide final answers only"
+        ],
+        end_instruction: "Ready to copy-paste and run.",
+        // Canonical config (authoritative)
+        config: {
+          role: cfg.role, task: cfg.task, inputs: cfg.inputs, constraints: cfg.constraints,
+          style: cfg.style, tone: cfg.tone, outputFormat: cfg.outputFormat,
+          verification: cfg.verification, nextAction: cfg.nextAction,
+          domain: cfg.domain, pattern: cfg.pattern, audience: cfg.audience,
+          lengthLimit: cfg.lengthLimit, references: cfg.references,
+          safetyLevel: cfg.safetyLevel, locale: cfg.locale, readingLevel: cfg.readingLevel, seed: cfg.seed
         }
+      };
+      jsonOut.textContent = JSON.stringify(out, null, 2);
+    }
 
-        // Copy Button Functionality
-        copyButton.addEventListener('click', () => {
-            promptTextarea.select(); // Select the text
-            try {
-                navigator.clipboard.writeText(promptTextarea.value)
-                    .then(() => {
-                        // Visual feedback
-                        copyStatus.style.opacity = '1';
-                        setTimeout(() => {
-                            copyStatus.style.opacity = '0';
-                        }, 1500); // Fade out after 1.5 seconds
-                    })
-                    .catch(err => {
-                        console.error('Failed to copy text: ', err);
-                        // Fallback for older browsers or errors
-                        try {
-                            document.execCommand('copy');
-                            copyStatus.style.opacity = '1';
-                             setTimeout(() => {
-                                copyStatus.style.opacity = '0';
-                             }, 1500);
-                        } catch (execErr) {
-                             console.error('Fallback copy failed: ', execErr);
-                             alert('Failed to copy prompt automatically. Please copy it manually.');
-                        }
-                    });
-            } catch (err) {
-                console.error('Clipboard API not available or failed: ', err);
-                 alert('Failed to copy prompt automatically. Please copy it manually.');
-            }
+    // ---------- Actions ----------
+    function assembleAndRender(){
+      const cfg = getConfig();
+      const val = validateCfg(cfg); renderValidation(val);
+      const prompt = assemblePrompt(cfg);
+      promptOut.value = prompt;
+      metaEl.textContent = `seed: ${cfg.seed} • chars: ${prompt.length}`;
+      renderJSON(cfg);
+      l('assemble', {domain:cfg.domain, pattern:cfg.pattern, len:prompt.length});
+    }
 
-             // Deselect text after attempting copy
-             window.getSelection().removeAllRanges();
-        });
+    byId('assemble').addEventListener('click', assembleAndRender);
+    byId('validate').addEventListener('click', ()=>{
+      const cfg=getConfig(); const val=validateCfg(cfg); renderValidation(val); renderJSON(cfg);
+      l('validate', {ok:val.ok, errors:val.errors.length, warnings:val.warnings.length});
+    });
 
-    </script>
+    byId('copyPrompt').addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(promptOut.value||''); l('copyPrompt'); }catch{}
+    });
+    byId('copyJSON').addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(jsonOut.textContent||''); l('copyJSON'); }catch{}
+    });
+    byId('downloadJSON').addEventListener('click', ()=>{
+      const blob = new Blob([jsonOut.textContent], {type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='prompt_config.json'; a.click();
+      l('downloadJSON');
+    });
+    byId('shareURL').addEventListener('click', ()=>{
+      const cfg = getConfig();
+      const s = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))));
+      const url = location.origin + location.pathname + '#cfg=' + s;
+      navigator.clipboard.writeText(url).catch(()=>{});
+      l('shareURL');
+      alert('Sharable URL copied to clipboard.');
+    });
+    byId('importJSON').addEventListener('change', async (e)=>{
+      const f=e.target.files?.[0]; if(!f) return;
+      const txt=await f.text(); try{ const j=JSON.parse(txt); applyConfig(j.config || j); assembleAndRender(); }catch(ex){ alert('Invalid JSON'); }
+    });
+    byId('reset').addEventListener('click', ()=> location.reload());
 
+    // ---------- Load from URL hash ----------
+    function loadHash(){
+      const h = location.hash.slice(1);
+      const m = /^cfg=(.+)$/.exec(h);
+      if(!m) return;
+      try{
+        const json = decodeURIComponent(escape(atob(decodeURIComponent(m[1]))));
+        const cfg = JSON.parse(json);
+        applyConfig(cfg); assembleAndRender();
+      }catch{ /* ignore */ }
+    }
+    function applyConfig(cfg){
+      const setSel=(id,val)=>{ const el=byId(id); if(!el) return; Array.from(el.options).forEach(o=>o.selected = (el.multiple ? (val||[]).includes(o.value) : o.value===val)); if(!el.multiple) el.value = val||el.value; el.dispatchEvent(new Event('change')); };
+      setSel('domainSel', cfg.domain);
+      setSel('patternSel', [cfg.pattern]);
+      byId('role').value = cfg.role||'';
+      byId('task').value = cfg.task||'';
+      byId('inputs').value = cfg.inputs||'';
+      byId('constraints').value = cfg.constraints||'';
+      setSel('styleSel', cfg.style);
+      setSel('toneSel', cfg.tone);
+      setSel('audSel', [cfg.audience]);
+      setSel('formatSel', cfg.outputFormat);
+      setSel('verifySel', [cfg.verification]);
+      setSel('nextSel', [cfg.nextAction]);
+      setSel('safetySel', cfg.safetyLevel);
+      setSel('localeSel', cfg.locale);
+      setSel('readSel', cfg.readingLevel);
+      byId('len').value = cfg.lengthLimit||1200;
+      byId('seed').value = cfg.seed||1337;
+      byId('brandSel').value = String(!!cfg.branding);
+    }
+    byId('loadHash').addEventListener('click', loadHash);
+    window.addEventListener('DOMContentLoaded', loadHash);
+
+    // ---------- Logs export/purge ----------
+    byId('exportLogs').addEventListener('click', ()=>{
+      const blob = new Blob([logEl.textContent], {type:'text/plain'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='logs.jsonl'; a.click();
+    });
+    byId('purgeLogs').addEventListener('click', ()=>{ logEl.textContent=''; l('logs.purge'); });
+
+    // ---------- Library Modal ----------
+    const modal = byId('libraryModal'), listbox = byId('listbox'), libSearch = byId('libSearch'), tabsEl = byId('tabs'), tabTitle = byId('tabTitle');
+    const LIB_TABS = [
+      {id:'roles',label:'Roles',data:ROLES},
+      {id:'tasks',label:'Tasks',data:[...new Set(Object.values(TASK_TEMPLATES).flat())]},
+      {id:'inputs',label:'Inputs',data:INPUTS},
+      {id:'constraints',label:'Constraints',data:CONSTRAINTS},
+      {id:'verify',label:'Verification',data:VERIFY},
+      {id:'next',label:'Next Actions',data:NEXT}
+    ];
+    let activeTab = 'roles';
+    function openLib(){ modal.classList.add('open'); renderTabs(); renderList(); libSearch.value=''; }
+    function closeLib(){ modal.classList.remove('open'); }
+    byId('openLibrary').onclick=openLib; byId('libClose').onclick=closeLib;
+
+    function renderTabs(){
+      tabsEl.innerHTML='';
+      LIB_TABS.forEach(t=>{
+        const b=document.createElement('button'); b.className='tabbtn text-slate-300'; b.textContent=t.label;
+        if(t.id===activeTab) b.classList.add('active');
+        b.onclick=()=>{ activeTab=t.id; renderTabs(); renderList(); };
+        tabsEl.appendChild(b);
+      });
+    }
+    function renderList(){
+      listbox.innerHTML='';
+      const data = LIB_TABS.find(t=>t.id===activeTab).data;
+      tabTitle.textContent = `${LIB_TABS.find(t=>t.id===activeTab).label} — ${data.length} options`;
+      const q = libSearch.value.trim().toLowerCase();
+      data.filter(v=>!q || v.toLowerCase().includes(q)).forEach(v=>{
+        const d=document.createElement('label'); d.className='lb-item text-slate-300';
+        d.innerHTML = `<input type="checkbox" class="mr-2"> <span>${v}</span>`;
+        listbox.appendChild(d);
+      });
+    }
+    libSearch.addEventListener('input', renderList);
+    byId('libInsert').onclick=()=>{
+      const target = byId('libTarget').value;
+      const picks = Array.from(listbox.querySelectorAll('input:checked')).map(c=>c.nextElementSibling.textContent);
+      if(!picks.length) return;
+      const field = byId(target);
+      const isTextArea = field.tagName==='TEXTAREA';
+      const addition = picks.map(x=> activeTab==='constraints' || activeTab==='inputs' ? `- ${x}` : x).join(isTextArea?'\n':', ');
+      field.value = field.value ? (isTextArea? field.value+'\n'+addition : field.value+', '+addition) : addition;
+      closeLib();
+    };
+
+    // ---------- PWA-lite Service Worker ----------
+    (async function registerSW(){
+      if(!('serviceWorker' in navigator)) { byId('status').textContent='No SW'; return; }
+      const swCode = `
+        const CACHE='magic-v2';
+        self.addEventListener('install', e=>{ e.waitUntil((async()=>{ const c=await caches.open(CACHE); await c.addAll(['./']); self.skipWaiting(); })()); });
+        self.addEventListener('activate', e=> e.waitUntil(self.clients.claim()));
+        self.addEventListener('fetch', e=>{ e.respondWith((async()=>{ const c=await caches.open(CACHE); const r=await c.match(e.request); return r || fetch(e.request).then(res=>{ if(e.request.method==='GET' && res.ok) c.put(e.request,res.clone()); return res; }); })()); });
+      `;
+      const url = URL.createObjectURL(new Blob([swCode],{type:'text/javascript'}));
+      try{
+        await navigator.serviceWorker.register(url,{scope:'./'});
+        byId('status').textContent='Offline-ready • SW active';
+      }catch{ byId('status').textContent='SW error'; }
+    })();
+
+    // ---------- Init ----------
+    // Prefill sensible defaults aligned with original prototype
+    byId('domainSel').value = "Misc/Custom"; byId('domainSel').dispatchEvent(new Event('change'));
+    byId('styleSel').value = "Neon/Futuristic";
+    byId('formatSel').value = "Markdown";
+    byId('safetySel').value = "General";
+    l('app.start',{ua:navigator.userAgent});
+  })();
+  </script>
 </body>
 </html>
